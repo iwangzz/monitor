@@ -3,4 +3,5 @@ vendor
 README.md
 public/css
 public/js
-
+.env
+.env.example

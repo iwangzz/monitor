@@ -1,2 +1,98 @@
-// @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
+@import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
+@import "node_modules/font-awesome/scss/font-awesome";
+@import "node_modules/bootstrap-daterangepicker/daterangepicker.scss";
 
+@import "node_modules/datatables.net-bs/css/dataTables.bootstrap";
+@import "node_modules/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap";
+@import "node_modules/datatables.net-buttons-bs/css/buttons.bootstrap";
+
+.nav-no .container.body .col-md-3.left_col {
+  width: 0px;
+  padding: 0;
+  z-index: 9999;
+  position: absolute; }
+
+.nav-no .container.body .col-md-3.left_col.menu_fixed {
+  position: fixed;
+  height: 100%; }
+
+.nav-no .container.body .col-md-3.left_col .mCSB_container,
+.nav-no .container.body .col-md-3.left_col .mCustomScrollBox {
+  overflow: visible; }
+
+.nav-no .hidden-small {
+  visibility: hidden;
+   }
+
+.nav-no .container.body .right_col {
+  padding: 10px 20px;
+  margin-left: 0px;
+  z-index: 2; }
+
+.nav-no .navbar.nav_title {
+  width: 0px; }
+
+.nav-no .navbar.nav_title a span {
+  display: none; }
+
+.nav-no .navbar.nav_title a i {
+  font-size: 27px;
+  margin: 13px 0 0 3px; }
+
+.site_title i {
+  border: 1px solid #EAEAEA;
+  padding: 5px 6px;
+  border-radius: 50%; }
+
+.nav-no .main_container .top_nav {
+  display: block;
+  margin-left: 0px;
+  z-index: 2; }
+
+.nav-no .nav.side-menu li a {
+  text-align: center !important;
+  font-weight: 400;
+  font-size: 10px;
+  padding: 10px 5px; }
+
+.nav-no .nav.child_menu li.active,
+.nav-no .nav.side-menu li.active-sm {
+  border-right: 5px solid #1ABB9C; }
+
+.nav-no ul.nav.child_menu ul,
+.nav-no .nav.side-menu li.active-sm ul ul {
+  position: static;
+  width: 200px;
+  background: none; }
+
+.nav-no > .nav.side-menu > li.active-sm > a {
+  color: #1ABB9C !important; }
+
+.nav-no .nav.side-menu li a i.toggle-up {
+  display: none !important; }
+
+.nav-no .nav.side-menu li a i {
+  font-size: 25px !important;
+  text-align: center;
+  width: 100% !important;
+  margin-bottom: 5px; }
+
+.nav-no ul.nav.child_menu {
+  left: 100%;
+  position: absolute;
+  top: 0;
+  width: 210px;
+  z-index: 4000;
+  background: #3E5367;
+  display: none; }
+
+.nav-no ul.nav.child_menu li {
+  padding: 0 10px; }
+
+.nav-no ul.nav.child_menu li a {
+  text-align: left !important; }
+
+.nav-no .profile {
+  display: none; }
+
+.nav_menu {margin-bottom: 0 !important}

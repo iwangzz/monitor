@@ -13,10 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>Login</title>
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/font-awesome.min.css" rel="stylesheet">
-    <link href="https://colorlib.com/polygon/gentelella/css/animate.min.css" rel="stylesheet">
-    <link href="css/custom.min.css" rel="stylesheet">
+    <link href="{{ elixir('css/main.css') }}" rel="stylesheet">
 </head>
 
 <body class="login">
@@ -98,6 +95,6 @@
         </div>
       </div>
     </div>
-    <script src="js/jquery.min.js"></script>
+    <script src="{{ elixir('js/main.js') }}"></script>
 </body>
 </html>

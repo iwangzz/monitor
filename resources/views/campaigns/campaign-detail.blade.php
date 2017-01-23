@@ -19,9 +19,7 @@
         <h2>{{ $campaign->project_name }}</h2>
         <div class="clearfix"></div>
       </div>
-
       <div class="x_content">
-
         <div class="col-md-9 col-sm-9 col-xs-12 text-center">
 
           <ul class="stats-overview">
@@ -45,7 +43,6 @@
           <br />
           <br />
         </div>
-
         <!-- start project-detail sidebar -->
         <div class="col-md-3 col-sm-3 col-xs-12">
 
@@ -77,42 +74,42 @@
 
           </section>
         </div>
-
         <div class="col-sm-12">
-            <div class="" role="tabpanel" data-example-id="togglable-tabs">
-              <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
-                <li role="presentation" class="active"><a href="#tab_content1" id="home-tab" role="tab" data-toggle="tab" aria-expanded="true">Recent Activity</a>
-                </li>
-              </ul>
-              <div id="myTabContent" class="tab-content">
-                <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
-                    
-                    <table id="campaign-detail" class="table table-striped table-bordered">
-                      <thead>
-                        <tr>
-                          @if ($opt == 'kpi') 
-                            <th>Affiliate ID</th>
-                            <th>Affiliate Publisher</th>
-                            <th>PV</th>
-                            <th>UV</th>
-                            <th>Conversion</th>
-                            <th>CVR</th>
-                          @else
-                            <th>Affiliate ID</th>
-                            <th>Affiliate Publisher</th>
-                            <th>Conversion</th>
-                            <th>Invalid Conversion</th>
-                            <th>Invalid Proportion</th>
-                          @endif
-                        </tr>
-                      </thead>
-                    </table>
-                  </div>
-                </div>
+          <div class="" role="tabpanel" data-example-id="togglable-tabs">
+            <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+              <li role="presentation" @if($opt == 'kpi') class="active" @endif>
+                  <a href="/campaigns/{{ $campaign->id }}/kpi">Key Performance Indicator</a>
+              </li>
+              <li role="presentation" @if($opt == 'invalid-conversion') class="active" @endif>
+                  <a href="/campaigns/{{ $campaign->id }}/invalid-conversion">Invalid Conversion </a>
+              </li>
+            </ul>
+            <div class="tab-content">
+              <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
+                  <table id="campaign-detail" class="table table-striped table-bordered">
+                    <thead>
+                      <tr>
+                        @if ($opt == 'kpi') 
+                          <th>Affiliate ID</th>
+                          <th>Affiliate Publisher</th>
+                          <th>PV</th>
+                          <th>UV</th>
+                          <th>Conversion</th>
+                          <th>CVR</th>
+                        @else
+                          <th>Affiliate ID</th>
+                          <th>Affiliate Publisher</th>
+                          <th>Conversion</th>
+                          <th>Invalid Conversion</th>
+                          <th>Invalid Proportion</th>
+                        @endif
+                      </tr>
+                    </thead>
+                  </table>
               </div>
             </div>
+          </div>
         </div>
-        <!-- end project-detail sidebar -->
       </div>
     </div>
   </div>
@@ -120,23 +117,18 @@
 @endsection
 @push('scripts')
 <script>
-  $(function(){
-    
-  })
-</script>
-<script>
 $(function() {
+    $.ajaxSetup({
+      'headers': {
+        'ticket': 'eyJpdiI6IlwvS1ZMNTJOWitSeXhpRnhISlpHcWlRPT0iLCJ2YWx1ZSI6IkszbGNKU1MzTE5LQTEzWGd4Tll1ZW9QZ0pEc2p2MmdVakF4UHFGZmhLQnhpdWZDSTB4K2Vmb2h0VXRNWVpsTk5FZUViVHYrREVqZ2VwRnZFNExGd3pBPT0iLCJtYWMiOiIzZDZhODMyMjYzYzZkMmJlYjhjNzg5ZWEzYmY0Njk3YzM2MGE1ZmU4MWU3Y2EzYWVlOWU0MTI1NzRlNjE5NGRlIn0',
+      }
+    })
     var html = '<div id="reportrange_right" class="pull-left" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; margin-bottom: 20px;">' + 
               '<i class="glyphicon glyphicon-calendar fa fa-calendar"></i>' +
               '<span>December 30, 2014 - January 28, 2016</span> <b class="caret"></b>' +
               '<input type="hidden" value="{{ date('Y-m-d', $now-86400*6) }}" id="start-date">' +
               '<input type="hidden" value="{{ date('Y-m-d', $now) }}" id="end-date">' +
             '</div>';
-    $.ajaxSetup({
-      'headers': {
-        'ticket': 'eyJpdiI6IlwvS1ZMNTJOWitSeXhpRnhISlpHcWlRPT0iLCJ2YWx1ZSI6IkszbGNKU1MzTE5LQTEzWGd4Tll1ZW9QZ0pEc2p2MmdVakF4UHFGZmhLQnhpdWZDSTB4K2Vmb2h0VXRNWVpsTk5FZUViVHYrREVqZ2VwRnZFNExGd3pBPT0iLCJtYWMiOiIzZDZhODMyMjYzYzZkMmJlYjhjNzg5ZWEzYmY0Njk3YzM2MGE1ZmU4MWU3Y2EzYWVlOWU0MTI1NzRlNjE5NGRlIn0',
-      }
-    })
     var table =  "{{ $opt }}" == "kpi" ? $('#campaign-detail').dataTable({
         dom:"<'row'<'col-sm-6 date-picker'><'col-sm-6 mb15 text-right'B>>" +
         "<'row'<'col-sm-6'l><'col-sm-6 text-right'f>>" +
@@ -144,7 +136,7 @@ $(function() {
         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
         "serverSide": true,
         "ajax": {
-          url: "http://192.168.1.13:8080/camp/{{ $campaign->id }}/basis/dt",
+          url: "http://localhost:80/camp/{{ $campaign->id }}/basis/dt",
           data: function(d) {
             d.startDate = $('#start-date').val();
             d.endDate = $('#end-date').val()
@@ -188,7 +180,7 @@ $(function() {
         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
         "serverSide": true,
         "ajax": {
-          url: "http://192.168.1.13:8080/camp/{{ $campaign->id }}/fraud/dt",
+          url: "http://localhost:80/camp/{{ $campaign->id }}/fraud/dt",
           data: function(d) {
             d.startDate = $('#start-date').val();
             d.endDate = $('#end-date').val()

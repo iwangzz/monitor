@@ -8681,6 +8681,13 @@ div.dt-button-background {
 .nav_menu {
   margin-bottom: 0 !important; }
 
+.mb15 {
+  margin-bottom: 15px; }
+
+.glyphicon {
+  right: 4px;
+  top: 0px; }
+
 @charset "UTF-8";
 .left_col {
   background: #2A3F54; }

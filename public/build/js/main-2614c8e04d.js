@@ -1626,7 +1626,7 @@
 
 }));
 
-},{"jquery":414,"moment":2}],2:[function(require,module,exports){
+},{"jquery":425,"moment":2}],2:[function(require,module,exports){
 //! moment.js
 //! version : 2.17.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -23810,9 +23810,4899 @@ return DataTable;
 	return $.fn.dataTable;
 }));
 
-},{"jquery":414}],19:[function(require,module,exports){
+},{"jquery":425}],19:[function(require,module,exports){
+/*! Bootstrap integration for DataTables' Buttons
+ * ©2016 SpryMedia Ltd - datatables.net/license
+ */
+
+(function( factory ){
+	if ( typeof define === 'function' && define.amd ) {
+		// AMD
+		define( ['jquery', 'datatables.net-bs', 'datatables.net-buttons'], function ( $ ) {
+			return factory( $, window, document );
+		} );
+	}
+	else if ( typeof exports === 'object' ) {
+		// CommonJS
+		module.exports = function (root, $) {
+			if ( ! root ) {
+				root = window;
+			}
+
+			if ( ! $ || ! $.fn.dataTable ) {
+				$ = require('datatables.net-bs')(root, $).$;
+			}
+
+			if ( ! $.fn.dataTable.Buttons ) {
+				require('datatables.net-buttons')(root, $);
+			}
+
+			return factory( $, root, root.document );
+		};
+	}
+	else {
+		// Browser
+		factory( jQuery, window, document );
+	}
+}(function( $, window, document, undefined ) {
+'use strict';
+var DataTable = $.fn.dataTable;
+
+
+$.extend( true, DataTable.Buttons.defaults, {
+	dom: {
+		container: {
+			className: 'dt-buttons btn-group'
+		},
+		button: {
+			className: 'btn btn-default'
+		},
+		collection: {
+			tag: 'ul',
+			className: 'dt-button-collection dropdown-menu',
+			button: {
+				tag: 'li',
+				className: 'dt-button'
+			},
+			buttonLiner: {
+				tag: 'a',
+				className: ''
+			}
+		}
+	}
+} );
+
+DataTable.ext.buttons.collection.text = function ( dt ) {
+	return dt.i18n('buttons.collection', 'Collection <span class="caret"/>');
+};
+
+
+return DataTable.Buttons;
+}));
+
+},{"datatables.net-bs":20,"datatables.net-buttons":22}],20:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"datatables.net":21,"dup":17}],21:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"dup":18,"jquery":414}],20:[function(require,module,exports){
+},{"dup":18,"jquery":425}],22:[function(require,module,exports){
+/*! Buttons for DataTables 1.2.4
+ * ©2016 SpryMedia Ltd - datatables.net/license
+ */
+
+(function( factory ){
+	if ( typeof define === 'function' && define.amd ) {
+		// AMD
+		define( ['jquery', 'datatables.net'], function ( $ ) {
+			return factory( $, window, document );
+		} );
+	}
+	else if ( typeof exports === 'object' ) {
+		// CommonJS
+		module.exports = function (root, $) {
+			if ( ! root ) {
+				root = window;
+			}
+
+			if ( ! $ || ! $.fn.dataTable ) {
+				$ = require('datatables.net')(root, $).$;
+			}
+
+			return factory( $, root, root.document );
+		};
+	}
+	else {
+		// Browser
+		factory( jQuery, window, document );
+	}
+}(function( $, window, document, undefined ) {
+'use strict';
+var DataTable = $.fn.dataTable;
+
+
+// Used for namespacing events added to the document by each instance, so they
+// can be removed on destroy
+var _instCounter = 0;
+
+// Button namespacing counter for namespacing events on individual buttons
+var _buttonCounter = 0;
+
+var _dtButtons = DataTable.ext.buttons;
+
+/**
+ * [Buttons description]
+ * @param {[type]}
+ * @param {[type]}
+ */
+var Buttons = function( dt, config )
+{
+	// Allow a boolean true for defaults
+	if ( config === true ) {
+		config = {};
+	}
+
+	// For easy configuration of buttons an array can be given
+	if ( $.isArray( config ) ) {
+		config = { buttons: config };
+	}
+
+	this.c = $.extend( true, {}, Buttons.defaults, config );
+
+	// Don't want a deep copy for the buttons
+	if ( config.buttons ) {
+		this.c.buttons = config.buttons;
+	}
+
+	this.s = {
+		dt: new DataTable.Api( dt ),
+		buttons: [],
+		listenKeys: '',
+		namespace: 'dtb'+(_instCounter++)
+	};
+
+	this.dom = {
+		container: $('<'+this.c.dom.container.tag+'/>')
+			.addClass( this.c.dom.container.className )
+	};
+
+	this._constructor();
+};
+
+
+$.extend( Buttons.prototype, {
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Public methods
+	 */
+
+	/**
+	 * Get the action of a button
+	 * @param  {int|string} Button index
+	 * @return {function}
+	 *//**
+	 * Set the action of a button
+	 * @param  {node} node Button element
+	 * @param  {function} action Function to set
+	 * @return {Buttons} Self for chaining
+	 */
+	action: function ( node, action )
+	{
+		var button = this._nodeToButton( node );
+
+		if ( action === undefined ) {
+			return button.conf.action;
+		}
+
+		button.conf.action = action;
+
+		return this;
+	},
+
+	/**
+	 * Add an active class to the button to make to look active or get current
+	 * active state.
+	 * @param  {node} node Button element
+	 * @param  {boolean} [flag] Enable / disable flag
+	 * @return {Buttons} Self for chaining or boolean for getter
+	 */
+	active: function ( node, flag ) {
+		var button = this._nodeToButton( node );
+		var klass = this.c.dom.button.active;
+		var jqNode = $(button.node);
+
+		if ( flag === undefined ) {
+			return jqNode.hasClass( klass );
+		}
+
+		jqNode.toggleClass( klass, flag === undefined ? true : flag );
+
+		return this;
+	},
+
+	/**
+	 * Add a new button
+	 * @param {object} config Button configuration object, base string name or function
+	 * @param {int|string} [idx] Button index for where to insert the button
+	 * @return {Buttons} Self for chaining
+	 */
+	add: function ( config, idx )
+	{
+		var buttons = this.s.buttons;
+
+		if ( typeof idx === 'string' ) {
+			var split = idx.split('-');
+			var base = this.s;
+
+			for ( var i=0, ien=split.length-1 ; i<ien ; i++ ) {
+				base = base.buttons[ split[i]*1 ];
+			}
+
+			buttons = base.buttons;
+			idx = split[ split.length-1 ]*1;
+		}
+
+		this._expandButton( buttons, config, false, idx );
+		this._draw();
+
+		return this;
+	},
+
+	/**
+	 * Get the container node for the buttons
+	 * @return {jQuery} Buttons node
+	 */
+	container: function ()
+	{
+		return this.dom.container;
+	},
+
+	/**
+	 * Disable a button
+	 * @param  {node} node Button node
+	 * @return {Buttons} Self for chaining
+	 */
+	disable: function ( node ) {
+		var button = this._nodeToButton( node );
+
+		$(button.node).addClass( this.c.dom.button.disabled );
+
+		return this;
+	},
+
+	/**
+	 * Destroy the instance, cleaning up event handlers and removing DOM
+	 * elements
+	 * @return {Buttons} Self for chaining
+	 */
+	destroy: function ()
+	{
+		// Key event listener
+		$('body').off( 'keyup.'+this.s.namespace );
+
+		// Individual button destroy (so they can remove their own events if
+		// needed). Take a copy as the array is modified by `remove`
+		var buttons = this.s.buttons.slice();
+		var i, ien;
+		
+		for ( i=0, ien=buttons.length ; i<ien ; i++ ) {
+			this.remove( buttons[i].node );
+		}
+
+		// Container
+		this.dom.container.remove();
+
+		// Remove from the settings object collection
+		var buttonInsts = this.s.dt.settings()[0];
+
+		for ( i=0, ien=buttonInsts.length ; i<ien ; i++ ) {
+			if ( buttonInsts.inst === this ) {
+				buttonInsts.splice( i, 1 );
+				break;
+			}
+		}
+
+		return this;
+	},
+
+	/**
+	 * Enable / disable a button
+	 * @param  {node} node Button node
+	 * @param  {boolean} [flag=true] Enable / disable flag
+	 * @return {Buttons} Self for chaining
+	 */
+	enable: function ( node, flag )
+	{
+		if ( flag === false ) {
+			return this.disable( node );
+		}
+
+		var button = this._nodeToButton( node );
+		$(button.node).removeClass( this.c.dom.button.disabled );
+
+		return this;
+	},
+
+	/**
+	 * Get the instance name for the button set selector
+	 * @return {string} Instance name
+	 */
+	name: function ()
+	{
+		return this.c.name;
+	},
+
+	/**
+	 * Get a button's node
+	 * @param  {node} node Button node
+	 * @return {jQuery} Button element
+	 */
+	node: function ( node )
+	{
+		var button = this._nodeToButton( node );
+		return $(button.node);
+	},
+
+	/**
+	 * Remove a button.
+	 * @param  {node} node Button node
+	 * @return {Buttons} Self for chaining
+	 */
+	remove: function ( node )
+	{
+		var button = this._nodeToButton( node );
+		var host = this._nodeToHost( node );
+		var dt = this.s.dt;
+
+		// Remove any child buttons first
+		if ( button.buttons.length ) {
+			for ( var i=button.buttons.length-1 ; i>=0 ; i-- ) {
+				this.remove( button.buttons[i].node );
+			}
+		}
+
+		// Allow the button to remove event handlers, etc
+		if ( button.conf.destroy ) {
+			button.conf.destroy.call( dt.button(node), dt, $(node), button.conf );
+		}
+
+		this._removeKey( button.conf );
+
+		$(button.node).remove();
+
+		var idx = $.inArray( button, host );
+		host.splice( idx, 1 );
+
+		return this;
+	},
+
+	/**
+	 * Get the text for a button
+	 * @param  {int|string} node Button index
+	 * @return {string} Button text
+	 *//**
+	 * Set the text for a button
+	 * @param  {int|string|function} node Button index
+	 * @param  {string} label Text
+	 * @return {Buttons} Self for chaining
+	 */
+	text: function ( node, label )
+	{
+		var button = this._nodeToButton( node );
+		var buttonLiner = this.c.dom.collection.buttonLiner;
+		var linerTag = button.inCollection && buttonLiner && buttonLiner.tag ?
+			buttonLiner.tag :
+			this.c.dom.buttonLiner.tag;
+		var dt = this.s.dt;
+		var jqNode = $(button.node);
+		var text = function ( opt ) {
+			return typeof opt === 'function' ?
+				opt( dt, jqNode, button.conf ) :
+				opt;
+		};
+
+		if ( label === undefined ) {
+			return text( button.conf.text );
+		}
+
+		button.conf.text = label;
+
+		if ( linerTag ) {
+			jqNode.children( linerTag ).html( text(label) );
+		}
+		else {
+			jqNode.html( text(label) );
+		}
+
+		return this;
+	},
+
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Constructor
+	 */
+
+	/**
+	 * Buttons constructor
+	 * @private
+	 */
+	_constructor: function ()
+	{
+		var that = this;
+		var dt = this.s.dt;
+		var dtSettings = dt.settings()[0];
+		var buttons =  this.c.buttons;
+
+		if ( ! dtSettings._buttons ) {
+			dtSettings._buttons = [];
+		}
+
+		dtSettings._buttons.push( {
+			inst: this,
+			name: this.c.name
+		} );
+
+		for ( var i=0, ien=buttons.length ; i<ien ; i++ ) {
+			this.add( buttons[i] );
+		}
+
+		dt.on( 'destroy', function () {
+			that.destroy();
+		} );
+
+		// Global key event binding to listen for button keys
+		$('body').on( 'keyup.'+this.s.namespace, function ( e ) {
+			if ( ! document.activeElement || document.activeElement === document.body ) {
+				// SUse a string of characters for fast lookup of if we need to
+				// handle this
+				var character = String.fromCharCode(e.keyCode).toLowerCase();
+
+				if ( that.s.listenKeys.toLowerCase().indexOf( character ) !== -1 ) {
+					that._keypress( character, e );
+				}
+			}
+		} );
+	},
+
+
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Private methods
+	 */
+
+	/**
+	 * Add a new button to the key press listener
+	 * @param {object} conf Resolved button configuration object
+	 * @private
+	 */
+	_addKey: function ( conf )
+	{
+		if ( conf.key ) {
+			this.s.listenKeys += $.isPlainObject( conf.key ) ?
+				conf.key.key :
+				conf.key;
+		}
+	},
+
+	/**
+	 * Insert the buttons into the container. Call without parameters!
+	 * @param  {node} [container] Recursive only - Insert point
+	 * @param  {array} [buttons] Recursive only - Buttons array
+	 * @private
+	 */
+	_draw: function ( container, buttons )
+	{
+		if ( ! container ) {
+			container = this.dom.container;
+			buttons = this.s.buttons;
+		}
+
+		container.children().detach();
+
+		for ( var i=0, ien=buttons.length ; i<ien ; i++ ) {
+			container.append( buttons[i].inserter );
+
+			if ( buttons[i].buttons && buttons[i].buttons.length ) {
+				this._draw( buttons[i].collection, buttons[i].buttons );
+			}
+		}
+	},
+
+	/**
+	 * Create buttons from an array of buttons
+	 * @param  {array} attachTo Buttons array to attach to
+	 * @param  {object} button Button definition
+	 * @param  {boolean} inCollection true if the button is in a collection
+	 * @private
+	 */
+	_expandButton: function ( attachTo, button, inCollection, attachPoint )
+	{
+		var dt = this.s.dt;
+		var buttonCounter = 0;
+		var buttons = ! $.isArray( button ) ?
+			[ button ] :
+			button;
+
+		for ( var i=0, ien=buttons.length ; i<ien ; i++ ) {
+			var conf = this._resolveExtends( buttons[i] );
+
+			if ( ! conf ) {
+				continue;
+			}
+
+			// If the configuration is an array, then expand the buttons at this
+			// point
+			if ( $.isArray( conf ) ) {
+				this._expandButton( attachTo, conf, inCollection, attachPoint );
+				continue;
+			}
+
+			var built = this._buildButton( conf, inCollection );
+			if ( ! built ) {
+				continue;
+			}
+
+			if ( attachPoint !== undefined ) {
+				attachTo.splice( attachPoint, 0, built );
+				attachPoint++;
+			}
+			else {
+				attachTo.push( built );
+			}
+
+			if ( built.conf.buttons ) {
+				var collectionDom = this.c.dom.collection;
+				built.collection = $('<'+collectionDom.tag+'/>')
+					.addClass( collectionDom.className );
+				built.conf._collection = built.collection;
+
+				this._expandButton( built.buttons, built.conf.buttons, true, attachPoint );
+			}
+
+			// init call is made here, rather than buildButton as it needs to
+			// be selectable, and for that it needs to be in the buttons array
+			if ( conf.init ) {
+				conf.init.call( dt.button( built.node ), dt, $(built.node), conf );
+			}
+
+			buttonCounter++;
+		}
+	},
+
+	/**
+	 * Create an individual button
+	 * @param  {object} config            Resolved button configuration
+	 * @param  {boolean} inCollection `true` if a collection button
+	 * @return {jQuery} Created button node (jQuery)
+	 * @private
+	 */
+	_buildButton: function ( config, inCollection )
+	{
+		var buttonDom = this.c.dom.button;
+		var linerDom = this.c.dom.buttonLiner;
+		var collectionDom = this.c.dom.collection;
+		var dt = this.s.dt;
+		var text = function ( opt ) {
+			return typeof opt === 'function' ?
+				opt( dt, button, config ) :
+				opt;
+		};
+
+		if ( inCollection && collectionDom.button ) {
+			buttonDom = collectionDom.button;
+		}
+
+		if ( inCollection && collectionDom.buttonLiner ) {
+			linerDom = collectionDom.buttonLiner;
+		}
+
+		// Make sure that the button is available based on whatever requirements
+		// it has. For example, Flash buttons require Flash
+		if ( config.available && ! config.available( dt, config ) ) {
+			return false;
+		}
+
+		var action = function ( e, dt, button, config ) {
+			config.action.call( dt.button( button ), e, dt, button, config );
+
+			$(dt.table().node()).triggerHandler( 'buttons-action.dt', [
+				dt.button( button ), dt, button, config 
+			] );
+		};
+
+		var button = $('<'+buttonDom.tag+'/>')
+			.addClass( buttonDom.className )
+			.attr( 'tabindex', this.s.dt.settings()[0].iTabIndex )
+			.attr( 'aria-controls', this.s.dt.table().node().id )
+			.on( 'click.dtb', function (e) {
+				e.preventDefault();
+
+				if ( ! button.hasClass( buttonDom.disabled ) && config.action ) {
+					action( e, dt, button, config );
+				}
+
+				button.blur();
+			} )
+			.on( 'keyup.dtb', function (e) {
+				if ( e.keyCode === 13 ) {
+					if ( ! button.hasClass( buttonDom.disabled ) && config.action ) {
+						action( e, dt, button, config );
+					}
+				}
+			} );
+
+		// Make `a` tags act like a link
+		if ( buttonDom.tag.toLowerCase() === 'a' ) {
+			button.attr( 'href', '#' );
+		}
+
+		if ( linerDom.tag ) {
+			var liner = $('<'+linerDom.tag+'/>')
+				.html( text( config.text ) )
+				.addClass( linerDom.className );
+
+			if ( linerDom.tag.toLowerCase() === 'a' ) {
+				liner.attr( 'href', '#' );
+			}
+
+			button.append( liner );
+		}
+		else {
+			button.html( text( config.text ) );
+		}
+
+		if ( config.enabled === false ) {
+			button.addClass( buttonDom.disabled );
+		}
+
+		if ( config.className ) {
+			button.addClass( config.className );
+		}
+
+		if ( config.titleAttr ) {
+			button.attr( 'title', config.titleAttr );
+		}
+
+		if ( ! config.namespace ) {
+			config.namespace = '.dt-button-'+(_buttonCounter++);
+		}
+
+		var buttonContainer = this.c.dom.buttonContainer;
+		var inserter;
+		if ( buttonContainer && buttonContainer.tag ) {
+			inserter = $('<'+buttonContainer.tag+'/>')
+				.addClass( buttonContainer.className )
+				.append( button );
+		}
+		else {
+			inserter = button;
+		}
+
+		this._addKey( config );
+
+		return {
+			conf:         config,
+			node:         button.get(0),
+			inserter:     inserter,
+			buttons:      [],
+			inCollection: inCollection,
+			collection:   null
+		};
+	},
+
+	/**
+	 * Get the button object from a node (recursive)
+	 * @param  {node} node Button node
+	 * @param  {array} [buttons] Button array, uses base if not defined
+	 * @return {object} Button object
+	 * @private
+	 */
+	_nodeToButton: function ( node, buttons )
+	{
+		if ( ! buttons ) {
+			buttons = this.s.buttons;
+		}
+
+		for ( var i=0, ien=buttons.length ; i<ien ; i++ ) {
+			if ( buttons[i].node === node ) {
+				return buttons[i];
+			}
+
+			if ( buttons[i].buttons.length ) {
+				var ret = this._nodeToButton( node, buttons[i].buttons );
+
+				if ( ret ) {
+					return ret;
+				}
+			}
+		}
+	},
+
+	/**
+	 * Get container array for a button from a button node (recursive)
+	 * @param  {node} node Button node
+	 * @param  {array} [buttons] Button array, uses base if not defined
+	 * @return {array} Button's host array
+	 * @private
+	 */
+	_nodeToHost: function ( node, buttons )
+	{
+		if ( ! buttons ) {
+			buttons = this.s.buttons;
+		}
+
+		for ( var i=0, ien=buttons.length ; i<ien ; i++ ) {
+			if ( buttons[i].node === node ) {
+				return buttons;
+			}
+
+			if ( buttons[i].buttons.length ) {
+				var ret = this._nodeToHost( node, buttons[i].buttons );
+
+				if ( ret ) {
+					return ret;
+				}
+			}
+		}
+	},
+
+	/**
+	 * Handle a key press - determine if any button's key configured matches
+	 * what was typed and trigger the action if so.
+	 * @param  {string} character The character pressed
+	 * @param  {object} e Key event that triggered this call
+	 * @private
+	 */
+	_keypress: function ( character, e )
+	{
+		var run = function ( conf, node ) {
+			if ( ! conf.key ) {
+				return;
+			}
+
+			if ( conf.key === character ) {
+				$(node).click();
+			}
+			else if ( $.isPlainObject( conf.key ) ) {
+				if ( conf.key.key !== character ) {
+					return;
+				}
+
+				if ( conf.key.shiftKey && ! e.shiftKey ) {
+					return;
+				}
+
+				if ( conf.key.altKey && ! e.altKey ) {
+					return;
+				}
+
+				if ( conf.key.ctrlKey && ! e.ctrlKey ) {
+					return;
+				}
+
+				if ( conf.key.metaKey && ! e.metaKey ) {
+					return;
+				}
+
+				// Made it this far - it is good
+				$(node).click();
+			}
+		};
+
+		var recurse = function ( a ) {
+			for ( var i=0, ien=a.length ; i<ien ; i++ ) {
+				run( a[i].conf, a[i].node );
+
+				if ( a[i].buttons.length ) {
+					recurse( a[i].buttons );
+				}
+			}
+		};
+
+		recurse( this.s.buttons );
+	},
+
+	/**
+	 * Remove a key from the key listener for this instance (to be used when a
+	 * button is removed)
+	 * @param  {object} conf Button configuration
+	 * @private
+	 */
+	_removeKey: function ( conf )
+	{
+		if ( conf.key ) {
+			var character = $.isPlainObject( conf.key ) ?
+				conf.key.key :
+				conf.key;
+
+			// Remove only one character, as multiple buttons could have the
+			// same listening key
+			var a = this.s.listenKeys.split('');
+			var idx = $.inArray( character, a );
+			a.splice( idx, 1 );
+			this.s.listenKeys = a.join('');
+		}
+	},
+
+	/**
+	 * Resolve a button configuration
+	 * @param  {string|function|object} conf Button config to resolve
+	 * @return {object} Button configuration
+	 * @private
+	 */
+	_resolveExtends: function ( conf )
+	{
+		var dt = this.s.dt;
+		var i, ien;
+		var toConfObject = function ( base ) {
+			var loop = 0;
+
+			// Loop until we have resolved to a button configuration, or an
+			// array of button configurations (which will be iterated
+			// separately)
+			while ( ! $.isPlainObject(base) && ! $.isArray(base) ) {
+				if ( base === undefined ) {
+					return;
+				}
+
+				if ( typeof base === 'function' ) {
+					base = base( dt, conf );
+
+					if ( ! base ) {
+						return false;
+					}
+				}
+				else if ( typeof base === 'string' ) {
+					if ( ! _dtButtons[ base ] ) {
+						throw 'Unknown button type: '+base;
+					}
+
+					base = _dtButtons[ base ];
+				}
+
+				loop++;
+				if ( loop > 30 ) {
+					// Protect against misconfiguration killing the browser
+					throw 'Buttons: Too many iterations';
+				}
+			}
+
+			return $.isArray( base ) ?
+				base :
+				$.extend( {}, base );
+		};
+
+		conf = toConfObject( conf );
+
+		while ( conf && conf.extend ) {
+			// Use `toConfObject` in case the button definition being extended
+			// is itself a string or a function
+			if ( ! _dtButtons[ conf.extend ] ) {
+				throw 'Cannot extend unknown button type: '+conf.extend;
+			}
+
+			var objArray = toConfObject( _dtButtons[ conf.extend ] );
+			if ( $.isArray( objArray ) ) {
+				return objArray;
+			}
+			else if ( ! objArray ) {
+				// This is a little brutal as it might be possible to have a
+				// valid button without the extend, but if there is no extend
+				// then the host button would be acting in an undefined state
+				return false;
+			}
+
+			// Stash the current class name
+			var originalClassName = objArray.className;
+
+			conf = $.extend( {}, objArray, conf );
+
+			// The extend will have overwritten the original class name if the
+			// `conf` object also assigned a class, but we want to concatenate
+			// them so they are list that is combined from all extended buttons
+			if ( originalClassName && conf.className !== originalClassName ) {
+				conf.className = originalClassName+' '+conf.className;
+			}
+
+			// Buttons to be added to a collection  -gives the ability to define
+			// if buttons should be added to the start or end of a collection
+			var postfixButtons = conf.postfixButtons;
+			if ( postfixButtons ) {
+				if ( ! conf.buttons ) {
+					conf.buttons = [];
+				}
+
+				for ( i=0, ien=postfixButtons.length ; i<ien ; i++ ) {
+					conf.buttons.push( postfixButtons[i] );
+				}
+
+				conf.postfixButtons = null;
+			}
+
+			var prefixButtons = conf.prefixButtons;
+			if ( prefixButtons ) {
+				if ( ! conf.buttons ) {
+					conf.buttons = [];
+				}
+
+				for ( i=0, ien=prefixButtons.length ; i<ien ; i++ ) {
+					conf.buttons.splice( i, 0, prefixButtons[i] );
+				}
+
+				conf.prefixButtons = null;
+			}
+
+			// Although we want the `conf` object to overwrite almost all of
+			// the properties of the object being extended, the `extend`
+			// property should come from the object being extended
+			conf.extend = objArray.extend;
+		}
+
+		return conf;
+	}
+} );
+
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Statics
+ */
+
+/**
+ * Show / hide a background layer behind a collection
+ * @param  {boolean} Flag to indicate if the background should be shown or
+ *   hidden 
+ * @param  {string} Class to assign to the background
+ * @static
+ */
+Buttons.background = function ( show, className, fade ) {
+	if ( fade === undefined ) {
+		fade = 400;
+	}
+
+	if ( show ) {
+		$('<div/>')
+			.addClass( className )
+			.css( 'display', 'none' )
+			.appendTo( 'body' )
+			.fadeIn( fade );
+	}
+	else {
+		$('body > div.'+className)
+			.fadeOut( fade, function () {
+				$(this)
+					.removeClass( className )
+					.remove();
+			} );
+	}
+};
+
+/**
+ * Instance selector - select Buttons instances based on an instance selector
+ * value from the buttons assigned to a DataTable. This is only useful if
+ * multiple instances are attached to a DataTable.
+ * @param  {string|int|array} Instance selector - see `instance-selector`
+ *   documentation on the DataTables site
+ * @param  {array} Button instance array that was attached to the DataTables
+ *   settings object
+ * @return {array} Buttons instances
+ * @static
+ */
+Buttons.instanceSelector = function ( group, buttons )
+{
+	if ( ! group ) {
+		return $.map( buttons, function ( v ) {
+			return v.inst;
+		} );
+	}
+
+	var ret = [];
+	var names = $.map( buttons, function ( v ) {
+		return v.name;
+	} );
+
+	// Flatten the group selector into an array of single options
+	var process = function ( input ) {
+		if ( $.isArray( input ) ) {
+			for ( var i=0, ien=input.length ; i<ien ; i++ ) {
+				process( input[i] );
+			}
+			return;
+		}
+
+		if ( typeof input === 'string' ) {
+			if ( input.indexOf( ',' ) !== -1 ) {
+				// String selector, list of names
+				process( input.split(',') );
+			}
+			else {
+				// String selector individual name
+				var idx = $.inArray( $.trim(input), names );
+
+				if ( idx !== -1 ) {
+					ret.push( buttons[ idx ].inst );
+				}
+			}
+		}
+		else if ( typeof input === 'number' ) {
+			// Index selector
+			ret.push( buttons[ input ].inst );
+		}
+	};
+	
+	process( group );
+
+	return ret;
+};
+
+/**
+ * Button selector - select one or more buttons from a selector input so some
+ * operation can be performed on them.
+ * @param  {array} Button instances array that the selector should operate on
+ * @param  {string|int|node|jQuery|array} Button selector - see
+ *   `button-selector` documentation on the DataTables site
+ * @return {array} Array of objects containing `inst` and `idx` properties of
+ *   the selected buttons so you know which instance each button belongs to.
+ * @static
+ */
+Buttons.buttonSelector = function ( insts, selector )
+{
+	var ret = [];
+	var nodeBuilder = function ( a, buttons, baseIdx ) {
+		var button;
+		var idx;
+
+		for ( var i=0, ien=buttons.length ; i<ien ; i++ ) {
+			button = buttons[i];
+
+			if ( button ) {
+				idx = baseIdx !== undefined ?
+					baseIdx+i :
+					i+'';
+
+				a.push( {
+					node: button.node,
+					name: button.conf.name,
+					idx:  idx
+				} );
+
+				if ( button.buttons ) {
+					nodeBuilder( a, button.buttons, idx+'-' );
+				}
+			}
+		}
+	};
+
+	var run = function ( selector, inst ) {
+		var i, ien;
+		var buttons = [];
+		nodeBuilder( buttons, inst.s.buttons );
+
+		var nodes = $.map( buttons, function (v) {
+			return v.node;
+		} );
+
+		if ( $.isArray( selector ) || selector instanceof $ ) {
+			for ( i=0, ien=selector.length ; i<ien ; i++ ) {
+				run( selector[i], inst );
+			}
+			return;
+		}
+
+		if ( selector === null || selector === undefined || selector === '*' ) {
+			// Select all
+			for ( i=0, ien=buttons.length ; i<ien ; i++ ) {
+				ret.push( {
+					inst: inst,
+					node: buttons[i].node
+				} );
+			}
+		}
+		else if ( typeof selector === 'number' ) {
+			// Main button index selector
+			ret.push( {
+				inst: inst,
+				node: inst.s.buttons[ selector ].node
+			} );
+		}
+		else if ( typeof selector === 'string' ) {
+			if ( selector.indexOf( ',' ) !== -1 ) {
+				// Split
+				var a = selector.split(',');
+
+				for ( i=0, ien=a.length ; i<ien ; i++ ) {
+					run( $.trim(a[i]), inst );
+				}
+			}
+			else if ( selector.match( /^\d+(\-\d+)*$/ ) ) {
+				// Sub-button index selector
+				var indexes = $.map( buttons, function (v) {
+					return v.idx;
+				} );
+
+				ret.push( {
+					inst: inst,
+					node: buttons[ $.inArray( selector, indexes ) ].node
+				} );
+			}
+			else if ( selector.indexOf( ':name' ) !== -1 ) {
+				// Button name selector
+				var name = selector.replace( ':name', '' );
+
+				for ( i=0, ien=buttons.length ; i<ien ; i++ ) {
+					if ( buttons[i].name === name ) {
+						ret.push( {
+							inst: inst,
+							node: buttons[i].node
+						} );
+					}
+				}
+			}
+			else {
+				// jQuery selector on the nodes
+				$( nodes ).filter( selector ).each( function () {
+					ret.push( {
+						inst: inst,
+						node: this
+					} );
+				} );
+			}
+		}
+		else if ( typeof selector === 'object' && selector.nodeName ) {
+			// Node selector
+			var idx = $.inArray( selector, nodes );
+
+			if ( idx !== -1 ) {
+				ret.push( {
+					inst: inst,
+					node: nodes[ idx ]
+				} );
+			}
+		}
+	};
+
+
+	for ( var i=0, ien=insts.length ; i<ien ; i++ ) {
+		var inst = insts[i];
+
+		run( selector, inst );
+	}
+
+	return ret;
+};
+
+
+/**
+ * Buttons defaults. For full documentation, please refer to the docs/option
+ * directory or the DataTables site.
+ * @type {Object}
+ * @static
+ */
+Buttons.defaults = {
+	buttons: [ 'copy', 'excel', 'csv', 'pdf', 'print' ],
+	name: 'main',
+	tabIndex: 0,
+	dom: {
+		container: {
+			tag: 'div',
+			className: 'dt-buttons'
+		},
+		collection: {
+			tag: 'div',
+			className: 'dt-button-collection'
+		},
+		button: {
+			tag: 'a',
+			className: 'dt-button',
+			active: 'active',
+			disabled: 'disabled'
+		},
+		buttonLiner: {
+			tag: 'span',
+			className: ''
+		}
+	}
+};
+
+/**
+ * Version information
+ * @type {string}
+ * @static
+ */
+Buttons.version = '1.2.4';
+
+
+$.extend( _dtButtons, {
+	collection: {
+		text: function ( dt ) {
+			return dt.i18n( 'buttons.collection', 'Collection' );
+		},
+		className: 'buttons-collection',
+		action: function ( e, dt, button, config ) {
+			var host = button;
+			var hostOffset = host.offset();
+			var tableContainer = $( dt.table().container() );
+			var multiLevel = false;
+
+			// Remove any old collection
+			if ( $('div.dt-button-background').length ) {
+				multiLevel = $('.dt-button-collection').offset();
+				$('body').trigger( 'click.dtb-collection' );
+			}
+
+			config._collection
+				.addClass( config.collectionLayout )
+				.css( 'display', 'none' )
+				.appendTo( 'body' )
+				.fadeIn( config.fade );
+
+			var position = config._collection.css( 'position' );
+
+			if ( multiLevel && position === 'absolute' ) {
+				config._collection.css( {
+					top: multiLevel.top,
+					left: multiLevel.left
+				} );
+			}
+			else if ( position === 'absolute' ) {
+				config._collection.css( {
+					top: hostOffset.top + host.outerHeight(),
+					left: hostOffset.left
+				} );
+
+				var listRight = hostOffset.left + config._collection.outerWidth();
+				var tableRight = tableContainer.offset().left + tableContainer.width();
+				if ( listRight > tableRight ) {
+					config._collection.css( 'left', hostOffset.left - ( listRight - tableRight ) );
+				}
+			}
+			else {
+				// Fix position - centre on screen
+				var top = config._collection.height() / 2;
+				if ( top > $(window).height() / 2 ) {
+					top = $(window).height() / 2;
+				}
+
+				config._collection.css( 'marginTop', top*-1 );
+			}
+
+			if ( config.background ) {
+				Buttons.background( true, config.backgroundClassName, config.fade );
+			}
+
+			// Need to break the 'thread' for the collection button being
+			// activated by a click - it would also trigger this event
+			setTimeout( function () {
+				// This is bonkers, but if we don't have a click listener on the
+				// background element, iOS Safari will ignore the body click
+				// listener below. An empty function here is all that is
+				// required to make it work...
+				$('div.dt-button-background').on( 'click.dtb-collection', function () {} );
+
+				$('body').on( 'click.dtb-collection', function (e) {
+					// andSelf is deprecated in jQ1.8, but we want 1.7 compat
+					var back = $.fn.addBack ? 'addBack' : 'andSelf';
+
+					if ( ! $(e.target).parents()[back]().filter( config._collection ).length ) {
+						config._collection
+							.fadeOut( config.fade, function () {
+								config._collection.detach();
+							} );
+
+						$('div.dt-button-background').off( 'click.dtb-collection' );
+						Buttons.background( false, config.backgroundClassName, config.fade );
+
+						$('body').off( 'click.dtb-collection' );
+						dt.off( 'buttons-action.b-internal' );
+					}
+				} );
+			}, 10 );
+
+			if ( config.autoClose ) {
+				dt.on( 'buttons-action.b-internal', function () {
+					$('div.dt-button-background').click();
+				} );
+			}
+		},
+		background: true,
+		collectionLayout: '',
+		backgroundClassName: 'dt-button-background',
+		autoClose: false,
+		fade: 400
+	},
+	copy: function ( dt, conf ) {
+		if ( _dtButtons.copyHtml5 ) {
+			return 'copyHtml5';
+		}
+		if ( _dtButtons.copyFlash && _dtButtons.copyFlash.available( dt, conf ) ) {
+			return 'copyFlash';
+		}
+	},
+	csv: function ( dt, conf ) {
+		// Common option that will use the HTML5 or Flash export buttons
+		if ( _dtButtons.csvHtml5 && _dtButtons.csvHtml5.available( dt, conf ) ) {
+			return 'csvHtml5';
+		}
+		if ( _dtButtons.csvFlash && _dtButtons.csvFlash.available( dt, conf ) ) {
+			return 'csvFlash';
+		}
+	},
+	excel: function ( dt, conf ) {
+		// Common option that will use the HTML5 or Flash export buttons
+		if ( _dtButtons.excelHtml5 && _dtButtons.excelHtml5.available( dt, conf ) ) {
+			return 'excelHtml5';
+		}
+		if ( _dtButtons.excelFlash && _dtButtons.excelFlash.available( dt, conf ) ) {
+			return 'excelFlash';
+		}
+	},
+	pdf: function ( dt, conf ) {
+		// Common option that will use the HTML5 or Flash export buttons
+		if ( _dtButtons.pdfHtml5 && _dtButtons.pdfHtml5.available( dt, conf ) ) {
+			return 'pdfHtml5';
+		}
+		if ( _dtButtons.pdfFlash && _dtButtons.pdfFlash.available( dt, conf ) ) {
+			return 'pdfFlash';
+		}
+	},
+	pageLength: function ( dt ) {
+		var lengthMenu = dt.settings()[0].aLengthMenu;
+		var vals = $.isArray( lengthMenu[0] ) ? lengthMenu[0] : lengthMenu;
+		var lang = $.isArray( lengthMenu[0] ) ? lengthMenu[1] : lengthMenu;
+		var text = function ( dt ) {
+			return dt.i18n( 'buttons.pageLength', {
+				"-1": 'Show all rows',
+				_:    'Show %d rows'
+			}, dt.page.len() );
+		};
+
+		return {
+			extend: 'collection',
+			text: text,
+			className: 'buttons-page-length',
+			autoClose: true,
+			buttons: $.map( vals, function ( val, i ) {
+				return {
+					text: lang[i],
+					className: 'button-page-length',
+					action: function ( e, dt ) {
+						dt.page.len( val ).draw();
+					},
+					init: function ( dt, node, conf ) {
+						var that = this;
+						var fn = function () {
+							that.active( dt.page.len() === val );
+						};
+
+						dt.on( 'length.dt'+conf.namespace, fn );
+						fn();
+					},
+					destroy: function ( dt, node, conf ) {
+						dt.off( 'length.dt'+conf.namespace );
+					}
+				};
+			} ),
+			init: function ( dt, node, conf ) {
+				var that = this;
+				dt.on( 'length.dt'+conf.namespace, function () {
+					that.text( text( dt ) );
+				} );
+			},
+			destroy: function ( dt, node, conf ) {
+				dt.off( 'length.dt'+conf.namespace );
+			}
+		};
+	}
+} );
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * DataTables API
+ *
+ * For complete documentation, please refer to the docs/api directory or the
+ * DataTables site
+ */
+
+// Buttons group and individual button selector
+DataTable.Api.register( 'buttons()', function ( group, selector ) {
+	// Argument shifting
+	if ( selector === undefined ) {
+		selector = group;
+		group = undefined;
+	}
+
+	this.selector.buttonGroup = group;
+
+	var res = this.iterator( true, 'table', function ( ctx ) {
+		if ( ctx._buttons ) {
+			return Buttons.buttonSelector(
+				Buttons.instanceSelector( group, ctx._buttons ),
+				selector
+			);
+		}
+	}, true );
+
+	res._groupSelector = group;
+	return res;
+} );
+
+// Individual button selector
+DataTable.Api.register( 'button()', function ( group, selector ) {
+	// just run buttons() and truncate
+	var buttons = this.buttons( group, selector );
+
+	if ( buttons.length > 1 ) {
+		buttons.splice( 1, buttons.length );
+	}
+
+	return buttons;
+} );
+
+// Active buttons
+DataTable.Api.registerPlural( 'buttons().active()', 'button().active()', function ( flag ) {
+	if ( flag === undefined ) {
+		return this.map( function ( set ) {
+			return set.inst.active( set.node );
+		} );
+	}
+
+	return this.each( function ( set ) {
+		set.inst.active( set.node, flag );
+	} );
+} );
+
+// Get / set button action
+DataTable.Api.registerPlural( 'buttons().action()', 'button().action()', function ( action ) {
+	if ( action === undefined ) {
+		return this.map( function ( set ) {
+			return set.inst.action( set.node );
+		} );
+	}
+
+	return this.each( function ( set ) {
+		set.inst.action( set.node, action );
+	} );
+} );
+
+// Enable / disable buttons
+DataTable.Api.register( ['buttons().enable()', 'button().enable()'], function ( flag ) {
+	return this.each( function ( set ) {
+		set.inst.enable( set.node, flag );
+	} );
+} );
+
+// Disable buttons
+DataTable.Api.register( ['buttons().disable()', 'button().disable()'], function () {
+	return this.each( function ( set ) {
+		set.inst.disable( set.node );
+	} );
+} );
+
+// Get button nodes
+DataTable.Api.registerPlural( 'buttons().nodes()', 'button().node()', function () {
+	var jq = $();
+
+	// jQuery will automatically reduce duplicates to a single entry
+	$( this.each( function ( set ) {
+		jq = jq.add( set.inst.node( set.node ) );
+	} ) );
+
+	return jq;
+} );
+
+// Get / set button text (i.e. the button labels)
+DataTable.Api.registerPlural( 'buttons().text()', 'button().text()', function ( label ) {
+	if ( label === undefined ) {
+		return this.map( function ( set ) {
+			return set.inst.text( set.node );
+		} );
+	}
+
+	return this.each( function ( set ) {
+		set.inst.text( set.node, label );
+	} );
+} );
+
+// Trigger a button's action
+DataTable.Api.registerPlural( 'buttons().trigger()', 'button().trigger()', function () {
+	return this.each( function ( set ) {
+		set.inst.node( set.node ).trigger( 'click' );
+	} );
+} );
+
+// Get the container elements
+DataTable.Api.registerPlural( 'buttons().containers()', 'buttons().container()', function () {
+	var jq = $();
+	var groupSelector = this._groupSelector;
+
+	// We need to use the group selector directly, since if there are no buttons
+	// the result set will be empty
+	this.iterator( true, 'table', function ( ctx ) {
+		if ( ctx._buttons ) {
+			var insts = Buttons.instanceSelector( groupSelector, ctx._buttons );
+
+			for ( var i=0, ien=insts.length ; i<ien ; i++ ) {
+				jq = jq.add( insts[i].container() );
+			}
+		}
+	} );
+
+	return jq;
+} );
+
+// Add a new button
+DataTable.Api.register( 'button().add()', function ( idx, conf ) {
+	var ctx = this.context;
+
+	// Don't use `this` as it could be empty - select the instances directly
+	if ( ctx.length ) {
+		var inst = Buttons.instanceSelector( this._groupSelector, ctx[0]._buttons );
+
+		if ( inst.length ) {
+			inst[0].add( conf, idx );
+		}
+	}
+
+	return this.button( this._groupSelector, idx );
+} );
+
+// Destroy the button sets selected
+DataTable.Api.register( 'buttons().destroy()', function () {
+	this.pluck( 'inst' ).unique().each( function ( inst ) {
+		inst.destroy();
+	} );
+
+	return this;
+} );
+
+// Remove a button
+DataTable.Api.registerPlural( 'buttons().remove()', 'buttons().remove()', function () {
+	this.each( function ( set ) {
+		set.inst.remove( set.node );
+	} );
+
+	return this;
+} );
+
+// Information box that can be used by buttons
+var _infoTimer;
+DataTable.Api.register( 'buttons.info()', function ( title, message, time ) {
+	var that = this;
+
+	if ( title === false ) {
+		$('#datatables_buttons_info').fadeOut( function () {
+			$(this).remove();
+		} );
+		clearTimeout( _infoTimer );
+		_infoTimer = null;
+
+		return this;
+	}
+
+	if ( _infoTimer ) {
+		clearTimeout( _infoTimer );
+	}
+
+	if ( $('#datatables_buttons_info').length ) {
+		$('#datatables_buttons_info').remove();
+	}
+
+	title = title ? '<h2>'+title+'</h2>' : '';
+
+	$('<div id="datatables_buttons_info" class="dt-button-info"/>')
+		.html( title )
+		.append( $('<div/>')[ typeof message === 'string' ? 'html' : 'append' ]( message ) )
+		.css( 'display', 'none' )
+		.appendTo( 'body' )
+		.fadeIn();
+
+	if ( time !== undefined && time !== 0 ) {
+		_infoTimer = setTimeout( function () {
+			that.buttons.info( false );
+		}, time );
+	}
+
+	return this;
+} );
+
+// Get data from the table for export - this is common to a number of plug-in
+// buttons so it is included in the Buttons core library
+DataTable.Api.register( 'buttons.exportData()', function ( options ) {
+	if ( this.context.length ) {
+		return _exportData( new DataTable.Api( this.context[0] ), options );
+	}
+} );
+
+
+var _exportTextarea = $('<textarea/>')[0];
+var _exportData = function ( dt, inOpts )
+{
+	var config = $.extend( true, {}, {
+		rows:           null,
+		columns:        '',
+		modifier:       {
+			search: 'applied',
+			order:  'applied'
+		},
+		orthogonal:     'display',
+		stripHtml:      true,
+		stripNewlines:  true,
+		decodeEntities: true,
+		trim:           true,
+		format:         {
+			header: function ( d ) {
+				return strip( d );
+			},
+			footer: function ( d ) {
+				return strip( d );
+			},
+			body: function ( d ) {
+				return strip( d );
+			}
+		}
+	}, inOpts );
+
+	var strip = function ( str ) {
+		if ( typeof str !== 'string' ) {
+			return str;
+		}
+
+		if ( config.stripHtml ) {
+			str = str.replace( /<[^>]*>/g, '' );
+		}
+
+		if ( config.trim ) {
+			str = str.replace( /^\s+|\s+$/g, '' );
+		}
+
+		if ( config.stripNewlines ) {
+			str = str.replace( /\n/g, ' ' );
+		}
+
+		if ( config.decodeEntities ) {
+			_exportTextarea.innerHTML = str;
+			str = _exportTextarea.value;
+		}
+
+		return str;
+	};
+
+
+	var header = dt.columns( config.columns ).indexes().map( function (idx) {
+		var el = dt.column( idx ).header();
+		return config.format.header( el.innerHTML, idx, el );
+	} ).toArray();
+
+	var footer = dt.table().footer() ?
+		dt.columns( config.columns ).indexes().map( function (idx) {
+			var el = dt.column( idx ).footer();
+			return config.format.footer( el ? el.innerHTML : '', idx, el );
+		} ).toArray() :
+		null;
+
+	var rowIndexes = dt.rows( config.rows, config.modifier ).indexes().toArray();
+	var selectedCells = dt.cells( rowIndexes, config.columns );
+	var cells = selectedCells
+		.render( config.orthogonal )
+		.toArray();
+	var cellNodes = selectedCells
+		.nodes()
+		.toArray();
+
+	var columns = header.length;
+	var rows = columns > 0 ? cells.length / columns : 0;
+	var body = new Array( rows );
+	var cellCounter = 0;
+
+	for ( var i=0, ien=rows ; i<ien ; i++ ) {
+		var row = new Array( columns );
+
+		for ( var j=0 ; j<columns ; j++ ) {
+			row[j] = config.format.body( cells[ cellCounter ], i, j, cellNodes[ cellCounter ] );
+			cellCounter++;
+		}
+
+		body[i] = row;
+	}
+
+	return {
+		header: header,
+		footer: footer,
+		body:   body
+	};
+};
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * DataTables interface
+ */
+
+// Attach to DataTables objects for global access
+$.fn.dataTable.Buttons = Buttons;
+$.fn.DataTable.Buttons = Buttons;
+
+
+
+// DataTables creation - check if the buttons have been defined for this table,
+// they will have been if the `B` option was used in `dom`, otherwise we should
+// create the buttons instance here so they can be inserted into the document
+// using the API. Listen for `init` for compatibility with pre 1.10.10, but to
+// be removed in future.
+$(document).on( 'init.dt plugin-init.dt', function (e, settings) {
+	if ( e.namespace !== 'dt' ) {
+		return;
+	}
+
+	var opts = settings.oInit.buttons || DataTable.defaults.buttons;
+
+	if ( opts && ! settings._buttons ) {
+		new Buttons( settings, opts ).container();
+	}
+} );
+
+// DataTables `dom` feature option
+DataTable.ext.feature.push( {
+	fnInit: function( settings ) {
+		var api = new DataTable.Api( settings );
+		var opts = api.init().buttons || DataTable.defaults.buttons;
+
+		return new Buttons( api, opts ).container();
+	},
+	cFeature: "B"
+} );
+
+
+return Buttons;
+}));
+
+},{"datatables.net":23}],23:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18,"jquery":425}],24:[function(require,module,exports){
+/*!
+ * Column visibility buttons for Buttons and DataTables.
+ * 2016 SpryMedia Ltd - datatables.net/license
+ */
+
+(function( factory ){
+	if ( typeof define === 'function' && define.amd ) {
+		// AMD
+		define( ['jquery', 'datatables.net', 'datatables.net-buttons'], function ( $ ) {
+			return factory( $, window, document );
+		} );
+	}
+	else if ( typeof exports === 'object' ) {
+		// CommonJS
+		module.exports = function (root, $) {
+			if ( ! root ) {
+				root = window;
+			}
+
+			if ( ! $ || ! $.fn.dataTable ) {
+				$ = require('datatables.net')(root, $).$;
+			}
+
+			if ( ! $.fn.dataTable.Buttons ) {
+				require('datatables.net-buttons')(root, $);
+			}
+
+			return factory( $, root, root.document );
+		};
+	}
+	else {
+		// Browser
+		factory( jQuery, window, document );
+	}
+}(function( $, window, document, undefined ) {
+'use strict';
+var DataTable = $.fn.dataTable;
+
+
+$.extend( DataTable.ext.buttons, {
+	// A collection of column visibility buttons
+	colvis: function ( dt, conf ) {
+		return {
+			extend: 'collection',
+			text: function ( dt ) {
+				return dt.i18n( 'buttons.colvis', 'Column visibility' );
+			},
+			className: 'buttons-colvis',
+			buttons: [ {
+				extend: 'columnsToggle',
+				columns: conf.columns
+			} ]
+		};
+	},
+
+	// Selected columns with individual buttons - toggle column visibility
+	columnsToggle: function ( dt, conf ) {
+		var columns = dt.columns( conf.columns ).indexes().map( function ( idx ) {
+			return {
+				extend: 'columnToggle',
+				columns: idx
+			};
+		} ).toArray();
+
+		return columns;
+	},
+
+	// Single button to toggle column visibility
+	columnToggle: function ( dt, conf ) {
+		return {
+			extend: 'columnVisibility',
+			columns: conf.columns
+		};
+	},
+
+	// Selected columns with individual buttons - set column visibility
+	columnsVisibility: function ( dt, conf ) {
+		var columns = dt.columns( conf.columns ).indexes().map( function ( idx ) {
+			return {
+				extend: 'columnVisibility',
+				columns: idx,
+				visibility: conf.visibility
+			};
+		} ).toArray();
+
+		return columns;
+	},
+
+	// Single button to set column visibility
+	columnVisibility: {
+		columns: undefined, // column selector
+		text: function ( dt, button, conf ) {
+			return conf._columnText( dt, conf.columns );
+		},
+		className: 'buttons-columnVisibility',
+		action: function ( e, dt, button, conf ) {
+			var col = dt.columns( conf.columns );
+			var curr = col.visible();
+
+			col.visible( conf.visibility !== undefined ?
+				conf.visibility :
+				! (curr.length ? curr[0] : false )
+			);
+		},
+		init: function ( dt, button, conf ) {
+			var that = this;
+
+			dt
+				.on( 'column-visibility.dt'+conf.namespace, function (e, settings) {
+					if ( ! settings.bDestroying ) {
+						that.active( dt.column( conf.columns ).visible() );
+					}
+				} )
+				.on( 'column-reorder.dt'+conf.namespace, function (e, settings, details) {
+					// Don't rename buttons based on column name if the button
+					// controls more than one column!
+					if ( dt.columns( conf.columns ).count() !== 1 ) {
+						return;
+					}
+
+					if ( typeof conf.columns === 'number' ) {
+						conf.columns = details.mapping[ conf.columns ];
+					}
+
+					var col = dt.column( conf.columns );
+
+					that.text( conf._columnText( dt, conf.columns ) );
+					that.active( col.visible() );
+				} );
+
+			this.active( dt.column( conf.columns ).visible() );
+		},
+		destroy: function ( dt, button, conf ) {
+			dt
+				.off( 'column-visibility.dt'+conf.namespace )
+				.off( 'column-reorder.dt'+conf.namespace );
+		},
+
+		_columnText: function ( dt, col ) {
+			// Use DataTables' internal data structure until this is presented
+			// is a public API. The other option is to use
+			// `$( column(col).node() ).text()` but the node might not have been
+			// populated when Buttons is constructed.
+			var idx = dt.column( col ).index();
+			return dt.settings()[0].aoColumns[ idx ].sTitle
+				.replace(/\n/g," ")        // remove new lines
+				.replace( /<.*?>/g, "" )   // strip HTML
+				.replace(/^\s+|\s+$/g,""); // trim
+		}
+	},
+
+
+	colvisRestore: {
+		className: 'buttons-colvisRestore',
+
+		text: function ( dt ) {
+			return dt.i18n( 'buttons.colvisRestore', 'Restore visibility' );
+		},
+
+		init: function ( dt, button, conf ) {
+			conf._visOriginal = dt.columns().indexes().map( function ( idx ) {
+				return dt.column( idx ).visible();
+			} ).toArray();
+		},
+
+		action: function ( e, dt, button, conf ) {
+			dt.columns().every( function ( i ) {
+				// Take into account that ColReorder might have disrupted our
+				// indexes
+				var idx = dt.colReorder && dt.colReorder.transpose ?
+					dt.colReorder.transpose( i, 'toOriginal' ) :
+					i;
+
+				this.visible( conf._visOriginal[ idx ] );
+			} );
+		}
+	},
+
+
+	colvisGroup: {
+		className: 'buttons-colvisGroup',
+
+		action: function ( e, dt, button, conf ) {
+			dt.columns( conf.show ).visible( true, false );
+			dt.columns( conf.hide ).visible( false, false );
+
+			dt.columns.adjust();
+		},
+
+		show: [],
+
+		hide: []
+	}
+} );
+
+
+return DataTable.Buttons;
+}));
+
+},{"datatables.net":29,"datatables.net-buttons":28}],25:[function(require,module,exports){
+/*!
+ * Flash export buttons for Buttons and DataTables.
+ * 2015 SpryMedia Ltd - datatables.net/license
+ *
+ * ZeroClipbaord - MIT license
+ * Copyright (c) 2012 Joseph Huckaby
+ */
+
+(function( factory ){
+	if ( typeof define === 'function' && define.amd ) {
+		// AMD
+		define( ['jquery', 'datatables.net', 'datatables.net-buttons'], function ( $ ) {
+			return factory( $, window, document );
+		} );
+	}
+	else if ( typeof exports === 'object' ) {
+		// CommonJS
+		module.exports = function (root, $) {
+			if ( ! root ) {
+				root = window;
+			}
+
+			if ( ! $ || ! $.fn.dataTable ) {
+				$ = require('datatables.net')(root, $).$;
+			}
+
+			if ( ! $.fn.dataTable.Buttons ) {
+				require('datatables.net-buttons')(root, $);
+			}
+
+			return factory( $, root, root.document );
+		};
+	}
+	else {
+		// Browser
+		factory( jQuery, window, document );
+	}
+}(function( $, window, document, undefined ) {
+'use strict';
+var DataTable = $.fn.dataTable;
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * ZeroClipboard dependency
+ */
+
+/*
+ * ZeroClipboard 1.0.4 with modifications
+ * Author: Joseph Huckaby
+ * License: MIT
+ *
+ * Copyright (c) 2012 Joseph Huckaby
+ */
+var ZeroClipboard_TableTools = {
+	version: "1.0.4-TableTools2",
+	clients: {}, // registered upload clients on page, indexed by id
+	moviePath: '', // URL to movie
+	nextId: 1, // ID of next movie
+
+	$: function(thingy) {
+		// simple DOM lookup utility function
+		if (typeof(thingy) == 'string') {
+			thingy = document.getElementById(thingy);
+		}
+		if (!thingy.addClass) {
+			// extend element with a few useful methods
+			thingy.hide = function() { this.style.display = 'none'; };
+			thingy.show = function() { this.style.display = ''; };
+			thingy.addClass = function(name) { this.removeClass(name); this.className += ' ' + name; };
+			thingy.removeClass = function(name) {
+				this.className = this.className.replace( new RegExp("\\s*" + name + "\\s*"), " ").replace(/^\s+/, '').replace(/\s+$/, '');
+			};
+			thingy.hasClass = function(name) {
+				return !!this.className.match( new RegExp("\\s*" + name + "\\s*") );
+			};
+		}
+		return thingy;
+	},
+
+	setMoviePath: function(path) {
+		// set path to ZeroClipboard.swf
+		this.moviePath = path;
+	},
+
+	dispatch: function(id, eventName, args) {
+		// receive event from flash movie, send to client
+		var client = this.clients[id];
+		if (client) {
+			client.receiveEvent(eventName, args);
+		}
+	},
+
+	log: function ( str ) {
+		console.log( 'Flash: '+str );
+	},
+
+	register: function(id, client) {
+		// register new client to receive events
+		this.clients[id] = client;
+	},
+
+	getDOMObjectPosition: function(obj) {
+		// get absolute coordinates for dom element
+		var info = {
+			left: 0,
+			top: 0,
+			width: obj.width ? obj.width : obj.offsetWidth,
+			height: obj.height ? obj.height : obj.offsetHeight
+		};
+
+		if ( obj.style.width !== "" ) {
+			info.width = obj.style.width.replace("px","");
+		}
+
+		if ( obj.style.height !== "" ) {
+			info.height = obj.style.height.replace("px","");
+		}
+
+		while (obj) {
+			info.left += obj.offsetLeft;
+			info.top += obj.offsetTop;
+			obj = obj.offsetParent;
+		}
+
+		return info;
+	},
+
+	Client: function(elem) {
+		// constructor for new simple upload client
+		this.handlers = {};
+
+		// unique ID
+		this.id = ZeroClipboard_TableTools.nextId++;
+		this.movieId = 'ZeroClipboard_TableToolsMovie_' + this.id;
+
+		// register client with singleton to receive flash events
+		ZeroClipboard_TableTools.register(this.id, this);
+
+		// create movie
+		if (elem) {
+			this.glue(elem);
+		}
+	}
+};
+
+ZeroClipboard_TableTools.Client.prototype = {
+
+	id: 0, // unique ID for us
+	ready: false, // whether movie is ready to receive events or not
+	movie: null, // reference to movie object
+	clipText: '', // text to copy to clipboard
+	fileName: '', // default file save name
+	action: 'copy', // action to perform
+	handCursorEnabled: true, // whether to show hand cursor, or default pointer cursor
+	cssEffects: true, // enable CSS mouse effects on dom container
+	handlers: null, // user event handlers
+	sized: false,
+	sheetName: '', // default sheet name for excel export
+
+	glue: function(elem, title) {
+		// glue to DOM element
+		// elem can be ID or actual DOM element object
+		this.domElement = ZeroClipboard_TableTools.$(elem);
+
+		// float just above object, or zIndex 99 if dom element isn't set
+		var zIndex = 99;
+		if (this.domElement.style.zIndex) {
+			zIndex = parseInt(this.domElement.style.zIndex, 10) + 1;
+		}
+
+		// find X/Y position of domElement
+		var box = ZeroClipboard_TableTools.getDOMObjectPosition(this.domElement);
+
+		// create floating DIV above element
+		this.div = document.createElement('div');
+		var style = this.div.style;
+		style.position = 'absolute';
+		style.left = '0px';
+		style.top = '0px';
+		style.width = (box.width) + 'px';
+		style.height = box.height + 'px';
+		style.zIndex = zIndex;
+
+		if ( typeof title != "undefined" && title !== "" ) {
+			this.div.title = title;
+		}
+		if ( box.width !== 0 && box.height !== 0 ) {
+			this.sized = true;
+		}
+
+		// style.backgroundColor = '#f00'; // debug
+		if ( this.domElement ) {
+			this.domElement.appendChild(this.div);
+			this.div.innerHTML = this.getHTML( box.width, box.height ).replace(/&/g, '&amp;');
+		}
+	},
+
+	positionElement: function() {
+		var box = ZeroClipboard_TableTools.getDOMObjectPosition(this.domElement);
+		var style = this.div.style;
+
+		style.position = 'absolute';
+		//style.left = (this.domElement.offsetLeft)+'px';
+		//style.top = this.domElement.offsetTop+'px';
+		style.width = box.width + 'px';
+		style.height = box.height + 'px';
+
+		if ( box.width !== 0 && box.height !== 0 ) {
+			this.sized = true;
+		} else {
+			return;
+		}
+
+		var flash = this.div.childNodes[0];
+		flash.width = box.width;
+		flash.height = box.height;
+	},
+
+	getHTML: function(width, height) {
+		// return HTML for movie
+		var html = '';
+		var flashvars = 'id=' + this.id +
+			'&width=' + width +
+			'&height=' + height;
+
+		if (navigator.userAgent.match(/MSIE/)) {
+			// IE gets an OBJECT tag
+			var protocol = location.href.match(/^https/i) ? 'https://' : 'http://';
+			html += '<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="'+protocol+'download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=10,0,0,0" width="'+width+'" height="'+height+'" id="'+this.movieId+'" align="middle"><param name="allowScriptAccess" value="always" /><param name="allowFullScreen" value="false" /><param name="movie" value="'+ZeroClipboard_TableTools.moviePath+'" /><param name="loop" value="false" /><param name="menu" value="false" /><param name="quality" value="best" /><param name="bgcolor" value="#ffffff" /><param name="flashvars" value="'+flashvars+'"/><param name="wmode" value="transparent"/></object>';
+		}
+		else {
+			// all other browsers get an EMBED tag
+			html += '<embed id="'+this.movieId+'" src="'+ZeroClipboard_TableTools.moviePath+'" loop="false" menu="false" quality="best" bgcolor="#ffffff" width="'+width+'" height="'+height+'" name="'+this.movieId+'" align="middle" allowScriptAccess="always" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" flashvars="'+flashvars+'" wmode="transparent" />';
+		}
+		return html;
+	},
+
+	hide: function() {
+		// temporarily hide floater offscreen
+		if (this.div) {
+			this.div.style.left = '-2000px';
+		}
+	},
+
+	show: function() {
+		// show ourselves after a call to hide()
+		this.reposition();
+	},
+
+	destroy: function() {
+		// destroy control and floater
+		var that = this;
+
+		if (this.domElement && this.div) {
+			$(this.div).remove();
+
+			this.domElement = null;
+			this.div = null;
+
+			$.each( ZeroClipboard_TableTools.clients, function ( id, client ) {
+				if ( client === that ) {
+					delete ZeroClipboard_TableTools.clients[ id ];
+				}
+			} );
+		}
+	},
+
+	reposition: function(elem) {
+		// reposition our floating div, optionally to new container
+		// warning: container CANNOT change size, only position
+		if (elem) {
+			this.domElement = ZeroClipboard_TableTools.$(elem);
+			if (!this.domElement) {
+				this.hide();
+			}
+		}
+
+		if (this.domElement && this.div) {
+			var box = ZeroClipboard_TableTools.getDOMObjectPosition(this.domElement);
+			var style = this.div.style;
+			style.left = '' + box.left + 'px';
+			style.top = '' + box.top + 'px';
+		}
+	},
+
+	clearText: function() {
+		// clear the text to be copy / saved
+		this.clipText = '';
+		if (this.ready) {
+			this.movie.clearText();
+		}
+	},
+
+	appendText: function(newText) {
+		// append text to that which is to be copied / saved
+		this.clipText += newText;
+		if (this.ready) { this.movie.appendText(newText) ;}
+	},
+
+	setText: function(newText) {
+		// set text to be copied to be copied / saved
+		this.clipText = newText;
+		if (this.ready) { this.movie.setText(newText) ;}
+	},
+
+	setFileName: function(newText) {
+		// set the file name
+		this.fileName = newText;
+		if (this.ready) {
+			this.movie.setFileName(newText);
+		}
+	},
+
+	setSheetData: function(data) {
+		// set the xlsx sheet data
+		if (this.ready) {
+			this.movie.setSheetData( JSON.stringify( data ) );
+		}
+	},
+
+	setAction: function(newText) {
+		// set action (save or copy)
+		this.action = newText;
+		if (this.ready) {
+			this.movie.setAction(newText);
+		}
+	},
+
+	addEventListener: function(eventName, func) {
+		// add user event listener for event
+		// event types: load, queueStart, fileStart, fileComplete, queueComplete, progress, error, cancel
+		eventName = eventName.toString().toLowerCase().replace(/^on/, '');
+		if (!this.handlers[eventName]) {
+			this.handlers[eventName] = [];
+		}
+		this.handlers[eventName].push(func);
+	},
+
+	setHandCursor: function(enabled) {
+		// enable hand cursor (true), or default arrow cursor (false)
+		this.handCursorEnabled = enabled;
+		if (this.ready) {
+			this.movie.setHandCursor(enabled);
+		}
+	},
+
+	setCSSEffects: function(enabled) {
+		// enable or disable CSS effects on DOM container
+		this.cssEffects = !!enabled;
+	},
+
+	receiveEvent: function(eventName, args) {
+		var self;
+
+		// receive event from flash
+		eventName = eventName.toString().toLowerCase().replace(/^on/, '');
+
+		// special behavior for certain events
+		switch (eventName) {
+			case 'load':
+				// movie claims it is ready, but in IE this isn't always the case...
+				// bug fix: Cannot extend EMBED DOM elements in Firefox, must use traditional function
+				this.movie = document.getElementById(this.movieId);
+				if (!this.movie) {
+					self = this;
+					setTimeout( function() { self.receiveEvent('load', null); }, 1 );
+					return;
+				}
+
+				// firefox on pc needs a "kick" in order to set these in certain cases
+				if (!this.ready && navigator.userAgent.match(/Firefox/) && navigator.userAgent.match(/Windows/)) {
+					self = this;
+					setTimeout( function() { self.receiveEvent('load', null); }, 100 );
+					this.ready = true;
+					return;
+				}
+
+				this.ready = true;
+				this.movie.clearText();
+				this.movie.appendText( this.clipText );
+				this.movie.setFileName( this.fileName );
+				this.movie.setAction( this.action );
+				this.movie.setHandCursor( this.handCursorEnabled );
+				break;
+
+			case 'mouseover':
+				if (this.domElement && this.cssEffects) {
+					//this.domElement.addClass('hover');
+					if (this.recoverActive) {
+						this.domElement.addClass('active');
+					}
+				}
+				break;
+
+			case 'mouseout':
+				if (this.domElement && this.cssEffects) {
+					this.recoverActive = false;
+					if (this.domElement.hasClass('active')) {
+						this.domElement.removeClass('active');
+						this.recoverActive = true;
+					}
+					//this.domElement.removeClass('hover');
+				}
+				break;
+
+			case 'mousedown':
+				if (this.domElement && this.cssEffects) {
+					this.domElement.addClass('active');
+				}
+				break;
+
+			case 'mouseup':
+				if (this.domElement && this.cssEffects) {
+					this.domElement.removeClass('active');
+					this.recoverActive = false;
+				}
+				break;
+		} // switch eventName
+
+		if (this.handlers[eventName]) {
+			for (var idx = 0, len = this.handlers[eventName].length; idx < len; idx++) {
+				var func = this.handlers[eventName][idx];
+
+				if (typeof(func) == 'function') {
+					// actual function reference
+					func(this, args);
+				}
+				else if ((typeof(func) == 'object') && (func.length == 2)) {
+					// PHP style object + method, i.e. [myObject, 'myMethod']
+					func[0][ func[1] ](this, args);
+				}
+				else if (typeof(func) == 'string') {
+					// name of function
+					window[func](this, args);
+				}
+			} // foreach event handler defined
+		} // user defined handler for event
+	}
+};
+
+ZeroClipboard_TableTools.hasFlash = function ()
+{
+	try {
+		var fo = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+		if (fo) {
+			return true;
+		}
+	}
+	catch (e) {
+		if (
+			navigator.mimeTypes &&
+			navigator.mimeTypes['application/x-shockwave-flash'] !== undefined &&
+			navigator.mimeTypes['application/x-shockwave-flash'].enabledPlugin
+		) {
+			return true;
+		}
+	}
+
+	return false;
+};
+
+// For the Flash binding to work, ZeroClipboard_TableTools must be on the global
+// object list
+window.ZeroClipboard_TableTools = ZeroClipboard_TableTools;
+
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Local (private) functions
+ */
+
+/**
+ * If a Buttons instance is initlaised before it is placed into the DOM, Flash
+ * won't be able to bind to it, so we need to wait until it is available, this
+ * method abstracts that out.
+ *
+ * @param {ZeroClipboard} flash ZeroClipboard instance
+ * @param {jQuery} node  Button
+ */
+var _glue = function ( flash, node )
+{
+	var id = node.attr('id');
+
+	if ( node.parents('html').length ) {
+		flash.glue( node[0], '' );
+	}
+	else {
+		setTimeout( function () {
+			_glue( flash, node );
+		}, 500 );
+	}
+};
+
+/**
+ * Get the file name for an exported file.
+ *
+ * @param {object}  config       Button configuration
+ * @param {boolean} incExtension Include the file name extension
+ */
+var _filename = function ( config, incExtension )
+{
+	// Backwards compatibility
+	var filename = config.filename === '*' && config.title !== '*' && config.title !== undefined ?
+		config.title :
+		config.filename;
+
+	if ( typeof filename === 'function' ) {
+		filename = filename();
+	}
+
+	if ( filename.indexOf( '*' ) !== -1 ) {
+		filename = $.trim( filename.replace( '*', $('title').text() ) );
+	}
+
+	// Strip characters which the OS will object to
+	filename = filename.replace(/[^a-zA-Z0-9_\u00A1-\uFFFF\.,\-_ !\(\)]/g, "");
+
+	return incExtension === undefined || incExtension === true ?
+		filename+config.extension :
+		filename;
+};
+
+/**
+ * Get the sheet name for Excel exports.
+ *
+ * @param {object}  config       Button configuration
+ */
+var _sheetname = function ( config )
+{
+	var sheetName = 'Sheet1';
+
+	if ( config.sheetName ) {
+		sheetName = config.sheetName.replace(/[\[\]\*\/\\\?\:]/g, '');
+	}
+
+	return sheetName;
+};
+
+/**
+ * Get the title for an exported file.
+ *
+ * @param {object}  config  Button configuration
+ */
+var _title = function ( config )
+{
+	var title = config.title;
+
+	if ( typeof title === 'function' ) {
+		title = title();
+	}
+
+	return title.indexOf( '*' ) !== -1 ?
+		title.replace( '*', $('title').text() || 'Exported data' ) :
+		title;
+};
+
+/**
+ * Set the flash text. This has to be broken up into chunks as the Javascript /
+ * Flash bridge has a size limit. There is no indication in the Flash
+ * documentation what this is, and it probably depends upon the browser.
+ * Experimentation shows that the point is around 50k when data starts to get
+ * lost, so an 8K limit used here is safe.
+ *
+ * @param {ZeroClipboard} flash ZeroClipboard instance
+ * @param {string}        data  Data to send to Flash
+ */
+var _setText = function ( flash, data )
+{
+	var parts = data.match(/[\s\S]{1,8192}/g) || [];
+
+	flash.clearText();
+	for ( var i=0, len=parts.length ; i<len ; i++ )
+	{
+		flash.appendText( parts[i] );
+	}
+};
+
+/**
+ * Get the newline character(s)
+ *
+ * @param {object}  config Button configuration
+ * @return {string}        Newline character
+ */
+var _newLine = function ( config )
+{
+	return config.newline ?
+		config.newline :
+		navigator.userAgent.match(/Windows/) ?
+			'\r\n' :
+			'\n';
+};
+
+/**
+ * Combine the data from the `buttons.exportData` method into a string that
+ * will be used in the export file.
+ *
+ * @param  {DataTable.Api} dt     DataTables API instance
+ * @param  {object}        config Button configuration
+ * @return {object}               The data to export
+ */
+var _exportData = function ( dt, config )
+{
+	var newLine = _newLine( config );
+	var data = dt.buttons.exportData( config.exportOptions );
+	var boundary = config.fieldBoundary;
+	var separator = config.fieldSeparator;
+	var reBoundary = new RegExp( boundary, 'g' );
+	var escapeChar = config.escapeChar !== undefined ?
+		config.escapeChar :
+		'\\';
+	var join = function ( a ) {
+		var s = '';
+
+		// If there is a field boundary, then we might need to escape it in
+		// the source data
+		for ( var i=0, ien=a.length ; i<ien ; i++ ) {
+			if ( i > 0 ) {
+				s += separator;
+			}
+
+			s += boundary ?
+				boundary + ('' + a[i]).replace( reBoundary, escapeChar+boundary ) + boundary :
+				a[i];
+		}
+
+		return s;
+	};
+
+	var header = config.header ? join( data.header )+newLine : '';
+	var footer = config.footer && data.footer ? newLine+join( data.footer ) : '';
+	var body = [];
+
+	for ( var i=0, ien=data.body.length ; i<ien ; i++ ) {
+		body.push( join( data.body[i] ) );
+	}
+
+	return {
+		str: header + body.join( newLine ) + footer,
+		rows: body.length
+	};
+};
+
+
+// Basic initialisation for the buttons is common between them
+var flashButton = {
+	available: function () {
+		return ZeroClipboard_TableTools.hasFlash();
+	},
+
+	init: function ( dt, button, config ) {
+		// Insert the Flash movie
+		ZeroClipboard_TableTools.moviePath = DataTable.Buttons.swfPath;
+		var flash = new ZeroClipboard_TableTools.Client();
+
+		flash.setHandCursor( true );
+		flash.addEventListener('mouseDown', function(client) {
+			config._fromFlash = true;
+			dt.button( button[0] ).trigger();
+			config._fromFlash = false;
+		} );
+
+		_glue( flash, button );
+
+		config._flash = flash;
+	},
+
+	destroy: function ( dt, button, config ) {
+		config._flash.destroy();
+	},
+
+	fieldSeparator: ',',
+
+	fieldBoundary: '"',
+
+	exportOptions: {},
+
+	title: '*',
+
+	filename: '*',
+
+	extension: '.csv',
+
+	header: true,
+
+	footer: false
+};
+
+
+/**
+ * Convert from numeric position to letter for column names in Excel
+ * @param  {int} n Column number
+ * @return {string} Column letter(s) name
+ */
+function createCellPos( n ){
+	var ordA = 'A'.charCodeAt(0);
+	var ordZ = 'Z'.charCodeAt(0);
+	var len = ordZ - ordA + 1;
+	var s = "";
+
+	while( n >= 0 ) {
+		s = String.fromCharCode(n % len + ordA) + s;
+		n = Math.floor(n / len) - 1;
+	}
+
+	return s;
+}
+
+/**
+ * Create an XML node and add any children, attributes, etc without needing to
+ * be verbose in the DOM.
+ *
+ * @param  {object} doc      XML document
+ * @param  {string} nodeName Node name
+ * @param  {object} opts     Options - can be `attr` (attributes), `children`
+ *   (child nodes) and `text` (text content)
+ * @return {node}            Created node
+ */
+function _createNode( doc, nodeName, opts ){
+	var tempNode = doc.createElement( nodeName );
+
+	if ( opts ) {
+		if ( opts.attr ) {
+			$(tempNode).attr( opts.attr );
+		}
+
+		if( opts.children ) {
+			$.each( opts.children, function ( key, value ) {
+				tempNode.appendChild( value );
+			});
+		}
+
+		if( opts.text ) {
+			tempNode.appendChild( doc.createTextNode( opts.text ) );
+		}
+	}
+
+	return tempNode;
+}
+
+/**
+ * Get the width for an Excel column based on the contents of that column
+ * @param  {object} data Data for export
+ * @param  {int}    col  Column index
+ * @return {int}         Column width
+ */
+function _excelColWidth( data, col ) {
+	var max = data.header[col].length;
+	var len, lineSplit, str;
+
+	if ( data.footer && data.footer[col].length > max ) {
+		max = data.footer[col].length;
+	}
+
+	for ( var i=0, ien=data.body.length ; i<ien ; i++ ) {
+		str = data.body[i][col].toString();
+
+		// If there is a newline character, workout the width of the column
+		// based on the longest line in the string
+		if ( str.indexOf('\n') !== -1 ) {
+			lineSplit = str.split('\n');
+			lineSplit.sort( function (a, b) {
+				return b.length - a.length;
+			} );
+
+			len = lineSplit[0].length;
+		}
+		else {
+			len = str.length;
+		}
+
+		if ( len > max ) {
+			max = len;
+		}
+
+		// Max width rather than having potentially massive column widths
+		if ( max > 40 ) {
+			break;
+		}
+	}
+
+	max *= 1.3;
+
+	// And a min width
+	return max > 6 ? max : 6;
+}
+
+try {
+	var _serialiser = new XMLSerializer();
+	var _ieExcel;
+}
+catch (t) {}
+
+/**
+ * Convert XML documents in an object to strings
+ * @param  {object} obj XLSX document object
+ */
+function _xlsxToStrings( obj ) {
+	if ( _ieExcel === undefined ) {
+		// Detect if we are dealing with IE's _awful_ serialiser by seeing if it
+		// drop attributes
+		_ieExcel = _serialiser
+			.serializeToString(
+				$.parseXML( excelStrings['xl/worksheets/sheet1.xml'] )
+			)
+			.indexOf( 'xmlns:r' ) === -1;
+	}
+
+	$.each( obj, function ( name, val ) {
+		if ( $.isPlainObject( val ) ) {
+			_xlsxToStrings( val );
+		}
+		else {
+			if ( _ieExcel ) {
+				// IE's XML serialiser will drop some name space attributes from
+				// from the root node, so we need to save them. Do this by
+				// replacing the namespace nodes with a regular attribute that
+				// we convert back when serialised. Edge does not have this
+				// issue
+				var worksheet = val.childNodes[0];
+				var i, ien;
+				var attrs = [];
+
+				for ( i=worksheet.attributes.length-1 ; i>=0 ; i-- ) {
+					var attrName = worksheet.attributes[i].nodeName;
+					var attrValue = worksheet.attributes[i].nodeValue;
+
+					if ( attrName.indexOf( ':' ) !== -1 ) {
+						attrs.push( { name: attrName, value: attrValue } );
+
+						worksheet.removeAttribute( attrName );
+					}
+				}
+
+				for ( i=0, ien=attrs.length ; i<ien ; i++ ) {
+					var attr = val.createAttribute( attrs[i].name.replace( ':', '_dt_b_namespace_token_' ) );
+					attr.value = attrs[i].value;
+					worksheet.setAttributeNode( attr );
+				}
+			}
+
+			var str = _serialiser.serializeToString(val);
+
+			// Fix IE's XML
+			if ( _ieExcel ) {
+				// IE doesn't include the XML declaration
+				if ( str.indexOf( '<?xml' ) === -1 ) {
+					str = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+str;
+				}
+
+				// Return namespace attributes to being as such
+				str = str.replace( /_dt_b_namespace_token_/g, ':' );
+			}
+
+			// Safari, IE and Edge will put empty name space attributes onto
+			// various elements making them useless. This strips them out
+			str = str.replace( /<(.*?) xmlns=""(.*?)>/g, '<$1 $2>' );
+
+			obj[ name ] = str;
+		}
+	} );
+}
+
+// Excel - Pre-defined strings to build a basic XLSX file
+var excelStrings = {
+	"_rels/.rels":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+			'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+		'</Relationships>',
+
+	"xl/_rels/workbook.xml.rels":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+			'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+			'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+		'</Relationships>',
+
+	"[Content_Types].xml":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+			'<Default Extension="xml" ContentType="application/xml" />'+
+			'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />'+
+			'<Default Extension="jpeg" ContentType="image/jpeg" />'+
+			'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" />'+
+			'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" />'+
+			'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml" />'+
+		'</Types>',
+
+	"xl/workbook.xml":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+			'<fileVersion appName="xl" lastEdited="5" lowestEdited="5" rupBuild="24816"/>'+
+			'<workbookPr showInkAnnotation="0" autoCompressPictures="0"/>'+
+			'<bookViews>'+
+				'<workbookView xWindow="0" yWindow="0" windowWidth="25600" windowHeight="19020" tabRatio="500"/>'+
+			'</bookViews>'+
+			'<sheets>'+
+				'<sheet name="" sheetId="1" r:id="rId1"/>'+
+			'</sheets>'+
+		'</workbook>',
+
+	"xl/worksheets/sheet1.xml":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">'+
+			'<sheetData/>'+
+		'</worksheet>',
+
+	"xl/styles.xml":
+		'<?xml version="1.0" encoding="UTF-8"?>'+
+		'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">'+
+			'<numFmts count="6">'+
+				'<numFmt numFmtId="164" formatCode="#,##0.00_-\ [$$-45C]"/>'+
+				'<numFmt numFmtId="165" formatCode="&quot;£&quot;#,##0.00"/>'+
+				'<numFmt numFmtId="166" formatCode="[$€-2]\ #,##0.00"/>'+
+				'<numFmt numFmtId="167" formatCode="0.0%"/>'+
+				'<numFmt numFmtId="168" formatCode="#,##0;(#,##0)"/>'+
+				'<numFmt numFmtId="169" formatCode="#,##0.00;(#,##0.00)"/>'+
+			'</numFmts>'+
+			'<fonts count="5" x14ac:knownFonts="1">'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<color rgb="FFFFFFFF" />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<b />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<i />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<u />'+
+				'</font>'+
+			'</fonts>'+
+			'<fills count="6">'+
+				'<fill>'+
+					'<patternFill patternType="none" />'+
+				'</fill>'+
+				'<fill/>'+ // Excel appears to use this as a dotted background regardless of values
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="FFD9D9D9" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="FFD99795" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="ffc6efce" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="ffc6cfef" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+			'</fills>'+
+			'<borders count="2">'+
+				'<border>'+
+					'<left />'+
+					'<right />'+
+					'<top />'+
+					'<bottom />'+
+					'<diagonal />'+
+				'</border>'+
+				'<border diagonalUp="false" diagonalDown="false">'+
+					'<left style="thin">'+
+						'<color auto="1" />'+
+					'</left>'+
+					'<right style="thin">'+
+						'<color auto="1" />'+
+					'</right>'+
+					'<top style="thin">'+
+						'<color auto="1" />'+
+					'</top>'+
+					'<bottom style="thin">'+
+						'<color auto="1" />'+
+					'</bottom>'+
+					'<diagonal />'+
+				'</border>'+
+			'</borders>'+
+			'<cellStyleXfs count="1">'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" />'+
+			'</cellStyleXfs>'+
+			'<cellXfs count="61">'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="left"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="center"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="right"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="fill"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment textRotation="90"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment wrapText="1"/>'+
+				'</xf>'+
+				'<xf numFmtId="9"   fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="164" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="165" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="166" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="167" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="168" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="169" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="3" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="4" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+			'</cellXfs>'+
+			'<cellStyles count="1">'+
+				'<cellStyle name="Normal" xfId="0" builtinId="0" />'+
+			'</cellStyles>'+
+			'<dxfs count="0" />'+
+			'<tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleMedium4" />'+
+		'</styleSheet>'
+};
+// Note we could use 3 `for` loops for the styles, but when gzipped there is
+// virtually no difference in size, since the above can be easily compressed
+
+// Pattern matching for special number formats. Perhaps this should be exposed
+// via an API in future?
+var _excelSpecials = [
+	{ match: /^\-?\d+\.\d%$/,       style: 60, fmt: function (d) { return d/100; } }, // Precent with d.p.
+	{ match: /^\-?\d+\.?\d*%$/,     style: 56, fmt: function (d) { return d/100; } }, // Percent
+	{ match: /^\-?\$[\d,]+.?\d*$/,  style: 57 }, // Dollars
+	{ match: /^\-?£[\d,]+.?\d*$/,   style: 58 }, // Pounds
+	{ match: /^\-?€[\d,]+.?\d*$/,   style: 59 }, // Euros
+	{ match: /^\([\d,]+\)$/,        style: 61, fmt: function (d) { return -1 * d.replace(/[\(\)]/g, ''); } },  // Negative numbers indicated by brackets
+	{ match: /^\([\d,]+\.\d{2}\)$/, style: 62, fmt: function (d) { return -1 * d.replace(/[\(\)]/g, ''); } },  // Negative numbers indicated by brackets - 2d.p.
+	{ match: /^[\d,]+$/,            style: 63 }, // Numbers with thousand separators
+	{ match: /^[\d,]+\.\d{2}$/,     style: 64 }  // Numbers with 2d.p. and thousands separators
+];
+
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * DataTables options and methods
+ */
+
+// Set the default SWF path
+DataTable.Buttons.swfPath = '//cdn.datatables.net/buttons/1.2.4/swf/flashExport.swf';
+
+// Method to allow Flash buttons to be resized when made visible - as they are
+// of zero height and width if initialised hidden
+DataTable.Api.register( 'buttons.resize()', function () {
+	$.each( ZeroClipboard_TableTools.clients, function ( i, client ) {
+		if ( client.domElement !== undefined && client.domElement.parentNode ) {
+			client.positionElement();
+		}
+	} );
+} );
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Button definitions
+ */
+
+// Copy to clipboard
+DataTable.ext.buttons.copyFlash = $.extend( {}, flashButton, {
+	className: 'buttons-copy buttons-flash',
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.copy', 'Copy' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		// Check that the trigger did actually occur due to a Flash activation
+		if ( ! config._fromFlash ) {
+			return;
+		}
+
+		var flash = config._flash;
+		var data = _exportData( dt, config );
+		var output = config.customize ?
+			config.customize( data.str, config ) :
+			data.str;
+
+		flash.setAction( 'copy' );
+		_setText( flash, output );
+
+		dt.buttons.info(
+			dt.i18n( 'buttons.copyTitle', 'Copy to clipboard' ),
+			dt.i18n( 'buttons.copySuccess', {
+				_: 'Copied %d rows to clipboard',
+				1: 'Copied 1 row to clipboard'
+			}, data.rows ),
+			3000
+		);
+	},
+
+	fieldSeparator: '\t',
+
+	fieldBoundary: ''
+} );
+
+// CSV save file
+DataTable.ext.buttons.csvFlash = $.extend( {}, flashButton, {
+	className: 'buttons-csv buttons-flash',
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.csv', 'CSV' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		// Set the text
+		var flash = config._flash;
+		var data = _exportData( dt, config );
+		var output = config.customize ?
+			config.customize( data.str, config ) :
+			data.str;
+
+		flash.setAction( 'csv' );
+		flash.setFileName( _filename( config ) );
+		_setText( flash, output );
+	},
+
+	escapeChar: '"'
+} );
+
+// Excel save file - this is really a CSV file using UTF-8 that Excel can read
+DataTable.ext.buttons.excelFlash = $.extend( {}, flashButton, {
+	className: 'buttons-excel buttons-flash',
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.excel', 'Excel' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		var flash = config._flash;
+		var rowPos = 0;
+		var rels = $.parseXML( excelStrings['xl/worksheets/sheet1.xml'] ) ; //Parses xml
+		var relsGet = rels.getElementsByTagName( "sheetData" )[0];
+
+		var xlsx = {
+			_rels: {
+				".rels": $.parseXML( excelStrings['_rels/.rels'] )
+			},
+			xl: {
+				_rels: {
+					"workbook.xml.rels": $.parseXML( excelStrings['xl/_rels/workbook.xml.rels'] )
+				},
+				"workbook.xml": $.parseXML( excelStrings['xl/workbook.xml'] ),
+				"styles.xml": $.parseXML( excelStrings['xl/styles.xml'] ),
+				"worksheets": {
+					"sheet1.xml": rels
+				}
+
+			},
+			"[Content_Types].xml": $.parseXML( excelStrings['[Content_Types].xml'])
+		};
+
+		var data = dt.buttons.exportData( config.exportOptions );
+		var currentRow, rowNode;
+		var addRow = function ( row ) {
+			currentRow = rowPos+1;
+			rowNode = _createNode( rels, "row", { attr: {r:currentRow} } );
+
+			for ( var i=0, ien=row.length ; i<ien ; i++ ) {
+				// Concat both the Cell Columns as a letter and the Row of the cell.
+				var cellId = createCellPos(i) + '' + currentRow;
+				var cell = null;
+
+				// For null, undefined of blank cell, continue so it doesn't create the _createNode
+				if ( row[i] === null || row[i] === undefined || row[i] === '' ) {
+					continue;
+				}
+
+				row[i] = $.trim( row[i] );
+
+				// Special number formatting options
+				for ( var j=0, jen=_excelSpecials.length ; j<jen ; j++ ) {
+					var special = _excelSpecials[j];
+
+					if ( row[i].match && row[i].match( special.match ) ) {
+						var val = row[i].replace(/[^\d\.\-]/g, '');
+
+						if ( special.fmt ) {
+							val = special.fmt( val );
+						}
+
+						cell = _createNode( rels, 'c', {
+							attr: {
+								r: cellId,
+								s: special.style
+							},
+							children: [
+								_createNode( rels, 'v', { text: val } )
+							]
+						} );
+
+						break;
+					}
+				}
+
+				if ( ! cell ) {
+					if ( typeof row[i] === 'number' || (
+						row[i].match &&
+						row[i].match(/^-?\d+(\.\d+)?$/) &&
+						! row[i].match(/^0\d+/) )
+					) {
+						// Detect numbers - don't match numbers with leading zeros
+						// or a negative anywhere but the start
+						cell = _createNode( rels, 'c', {
+							attr: {
+								t: 'n',
+								r: cellId
+							},
+							children: [
+								_createNode( rels, 'v', { text: row[i] } )
+							]
+						} );
+					}
+					else {
+						// String output - replace non standard characters for text output
+						var text = ! row[i].replace ?
+							row[i] :
+							row[i].replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
+
+						cell = _createNode( rels, 'c', {
+							attr: {
+								t: 'inlineStr',
+								r: cellId
+							},
+							children:{
+								row: _createNode( rels, 'is', {
+									children: {
+										row: _createNode( rels, 't', {
+											text: text
+										} )
+									}
+								} )
+							}
+						} );
+					}
+				}
+
+				rowNode.appendChild( cell );
+			}
+
+			relsGet.appendChild(rowNode);
+			rowPos++;
+		};
+
+		$( 'sheets sheet', xlsx.xl['workbook.xml'] ).attr( 'name', _sheetname( config ) );
+
+		if ( config.customizeData ) {
+			config.customizeData( data );
+		}
+
+		if ( config.header ) {
+			addRow( data.header, rowPos );
+			$('row c', rels).attr( 's', '2' ); // bold
+		}
+
+		for ( var n=0, ie=data.body.length ; n<ie ; n++ ) {
+			addRow( data.body[n], rowPos );
+		}
+
+		if ( config.footer && data.footer ) {
+			addRow( data.footer, rowPos);
+			$('row:last c', rels).attr( 's', '2' ); // bold
+		}
+
+		// Set column widths
+		var cols = _createNode( rels, 'cols' );
+		$('worksheet', rels).prepend( cols );
+
+		for ( var i=0, ien=data.header.length ; i<ien ; i++ ) {
+			cols.appendChild( _createNode( rels, 'col', {
+				attr: {
+					min: i+1,
+					max: i+1,
+					width: _excelColWidth( data, i ),
+					customWidth: 1
+				}
+			} ) );
+		}
+
+		// Let the developer customise the document if they want to
+		if ( config.customize ) {
+			config.customize( xlsx );
+		}
+
+		_xlsxToStrings( xlsx );
+
+		flash.setAction( 'excel' );
+		flash.setFileName( _filename( config ) );
+		flash.setSheetData( xlsx );
+		_setText( flash, '' );
+	},
+
+	extension: '.xlsx'
+} );
+
+
+
+// PDF export
+DataTable.ext.buttons.pdfFlash = $.extend( {}, flashButton, {
+	className: 'buttons-pdf buttons-flash',
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.pdf', 'PDF' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		// Set the text
+		var flash = config._flash;
+		var data = dt.buttons.exportData( config.exportOptions );
+		var totalWidth = dt.table().node().offsetWidth;
+
+		// Calculate the column width ratios for layout of the table in the PDF
+		var ratios = dt.columns( config.columns ).indexes().map( function ( idx ) {
+			return dt.column( idx ).header().offsetWidth / totalWidth;
+		} );
+
+		flash.setAction( 'pdf' );
+		flash.setFileName( _filename( config ) );
+
+		_setText( flash, JSON.stringify( {
+			title:       _filename(config, false),
+			message: typeof config.message == 'function' ? config.message(dt, button, config) : config.message,
+			colWidth:    ratios.toArray(),
+			orientation: config.orientation,
+			size:        config.pageSize,
+			header:      config.header ? data.header : null,
+			footer:      config.footer ? data.footer : null,
+			body:        data.body
+		} ) );
+	},
+
+	extension: '.pdf',
+
+	orientation: 'portrait',
+
+	pageSize: 'A4',
+
+	message: '',
+
+	newline: '\n'
+} );
+
+
+return DataTable.Buttons;
+}));
+
+},{"datatables.net":29,"datatables.net-buttons":28}],26:[function(require,module,exports){
+/*!
+ * HTML5 export buttons for Buttons and DataTables.
+ * 2016 SpryMedia Ltd - datatables.net/license
+ *
+ * FileSaver.js (1.3.3) - MIT license
+ * Copyright © 2016 Eli Grey - http://eligrey.com
+ */
+
+(function( factory ){
+	if ( typeof define === 'function' && define.amd ) {
+		// AMD
+		define( ['jquery', 'datatables.net', 'datatables.net-buttons'], function ( $ ) {
+			return factory( $, window, document );
+		} );
+	}
+	else if ( typeof exports === 'object' ) {
+		// CommonJS
+		module.exports = function (root, $, jszip, pdfmake) {
+			if ( ! root ) {
+				root = window;
+			}
+
+			if ( ! $ || ! $.fn.dataTable ) {
+				$ = require('datatables.net')(root, $).$;
+			}
+
+			if ( ! $.fn.dataTable.Buttons ) {
+				require('datatables.net-buttons')(root, $);
+			}
+
+			return factory( $, root, root.document, jszip, pdfmake );
+		};
+	}
+	else {
+		// Browser
+		factory( jQuery, window, document );
+	}
+}(function( $, window, document, jszip, pdfmake, undefined ) {
+'use strict';
+var DataTable = $.fn.dataTable;
+
+// Allow the constructor to pass in JSZip and PDFMake from external requires.
+// Otherwise, use globally defined variables, if they are available.
+function _jsZip () {
+	return jszip || window.JSZip;
+}
+function _pdfMake () {
+	return pdfmake || window.pdfMake;
+}
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * FileSaver.js dependency
+ */
+
+/*jslint bitwise: true, indent: 4, laxbreak: true, laxcomma: true, smarttabs: true, plusplus: true */
+
+var _saveAs = (function(view) {
+	"use strict";
+	// IE <10 is explicitly unsupported
+	if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) {
+		return;
+	}
+	var
+		  doc = view.document
+		  // only get URL when necessary in case Blob.js hasn't overridden it yet
+		, get_URL = function() {
+			return view.URL || view.webkitURL || view;
+		}
+		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
+		, can_use_save_link = "download" in save_link
+		, click = function(node) {
+			var event = new MouseEvent("click");
+			node.dispatchEvent(event);
+		}
+		, is_safari = /constructor/i.test(view.HTMLElement) || view.safari
+		, is_chrome_ios =/CriOS\/[\d]+/.test(navigator.userAgent)
+		, throw_outside = function(ex) {
+			(view.setImmediate || view.setTimeout)(function() {
+				throw ex;
+			}, 0);
+		}
+		, force_saveable_type = "application/octet-stream"
+		// the Blob API is fundamentally broken as there is no "downloadfinished" event to subscribe to
+		, arbitrary_revoke_timeout = 1000 * 40 // in ms
+		, revoke = function(file) {
+			var revoker = function() {
+				if (typeof file === "string") { // file is an object URL
+					get_URL().revokeObjectURL(file);
+				} else { // file is a File
+					file.remove();
+				}
+			};
+			setTimeout(revoker, arbitrary_revoke_timeout);
+		}
+		, dispatch = function(filesaver, event_types, event) {
+			event_types = [].concat(event_types);
+			var i = event_types.length;
+			while (i--) {
+				var listener = filesaver["on" + event_types[i]];
+				if (typeof listener === "function") {
+					try {
+						listener.call(filesaver, event || filesaver);
+					} catch (ex) {
+						throw_outside(ex);
+					}
+				}
+			}
+		}
+		, auto_bom = function(blob) {
+			// prepend BOM for UTF-8 XML and text/* types (including HTML)
+			// note: your browser will automatically convert UTF-16 U+FEFF to EF BB BF
+			if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+				return new Blob([String.fromCharCode(0xFEFF), blob], {type: blob.type});
+			}
+			return blob;
+		}
+		, FileSaver = function(blob, name, no_auto_bom) {
+			if (!no_auto_bom) {
+				blob = auto_bom(blob);
+			}
+			// First try a.download, then web filesystem, then object URLs
+			var
+				  filesaver = this
+				, type = blob.type
+				, force = type === force_saveable_type
+				, object_url
+				, dispatch_all = function() {
+					dispatch(filesaver, "writestart progress write writeend".split(" "));
+				}
+				// on any filesys errors revert to saving with object URLs
+				, fs_error = function() {
+					if ((is_chrome_ios || (force && is_safari)) && view.FileReader) {
+						// Safari doesn't allow downloading of blob urls
+						var reader = new FileReader();
+						reader.onloadend = function() {
+							var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, 'data:attachment/file;');
+							var popup = view.open(url, '_blank');
+							if(!popup) view.location.href = url;
+							url=undefined; // release reference before dispatching
+							filesaver.readyState = filesaver.DONE;
+							dispatch_all();
+						};
+						reader.readAsDataURL(blob);
+						filesaver.readyState = filesaver.INIT;
+						return;
+					}
+					// don't create more object URLs than needed
+					if (!object_url) {
+						object_url = get_URL().createObjectURL(blob);
+					}
+					if (force) {
+						view.location.href = object_url;
+					} else {
+						var opened = view.open(object_url, "_blank");
+						if (!opened) {
+							// Apple does not allow window.open, see https://developer.apple.com/library/safari/documentation/Tools/Conceptual/SafariExtensionGuide/WorkingwithWindowsandTabs/WorkingwithWindowsandTabs.html
+							view.location.href = object_url;
+						}
+					}
+					filesaver.readyState = filesaver.DONE;
+					dispatch_all();
+					revoke(object_url);
+				}
+			;
+			filesaver.readyState = filesaver.INIT;
+
+			if (can_use_save_link) {
+				object_url = get_URL().createObjectURL(blob);
+				setTimeout(function() {
+					save_link.href = object_url;
+					save_link.download = name;
+					click(save_link);
+					dispatch_all();
+					revoke(object_url);
+					filesaver.readyState = filesaver.DONE;
+				});
+				return;
+			}
+
+			fs_error();
+		}
+		, FS_proto = FileSaver.prototype
+		, saveAs = function(blob, name, no_auto_bom) {
+			return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
+		}
+	;
+	// IE 10+ (native saveAs)
+	if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+		return function(blob, name, no_auto_bom) {
+			name = name || blob.name || "download";
+
+			if (!no_auto_bom) {
+				blob = auto_bom(blob);
+			}
+			return navigator.msSaveOrOpenBlob(blob, name);
+		};
+	}
+
+	FS_proto.abort = function(){};
+	FS_proto.readyState = FS_proto.INIT = 0;
+	FS_proto.WRITING = 1;
+	FS_proto.DONE = 2;
+
+	FS_proto.error =
+	FS_proto.onwritestart =
+	FS_proto.onprogress =
+	FS_proto.onwrite =
+	FS_proto.onabort =
+	FS_proto.onerror =
+	FS_proto.onwriteend =
+		null;
+
+	return saveAs;
+}(
+	   typeof self !== "undefined" && self
+	|| typeof window !== "undefined" && window
+	|| this.content
+));
+
+
+// Expose file saver on the DataTables API. Can't attach to `DataTables.Buttons`
+// since this file can be loaded before Button's core!
+DataTable.fileSave = _saveAs;
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Local (private) functions
+ */
+
+/**
+ * Get the file name for an exported file.
+ *
+ * @param {object}	config Button configuration
+ * @param {boolean} incExtension Include the file name extension
+ */
+var _filename = function ( config, incExtension )
+{
+	// Backwards compatibility
+	var filename = config.filename === '*' && config.title !== '*' && config.title !== undefined ?
+		config.title :
+		config.filename;
+
+	if ( typeof filename === 'function' ) {
+		filename = filename();
+	}
+
+	if ( filename.indexOf( '*' ) !== -1 ) {
+		filename = $.trim( filename.replace( '*', $('title').text() ) );
+	}
+
+	// Strip characters which the OS will object to
+	filename = filename.replace(/[^a-zA-Z0-9_\u00A1-\uFFFF\.,\-_ !\(\)]/g, "");
+
+	return incExtension === undefined || incExtension === true ?
+		filename+config.extension :
+		filename;
+};
+
+/**
+ * Get the sheet name for Excel exports.
+ *
+ * @param {object}	config Button configuration
+ */
+var _sheetname = function ( config )
+{
+	var sheetName = 'Sheet1';
+
+	if ( config.sheetName ) {
+		sheetName = config.sheetName.replace(/[\[\]\*\/\\\?\:]/g, '');
+	}
+
+return sheetName;
+};
+
+/**
+ * Get the title for an exported file.
+ *
+ * @param {object} config	Button configuration
+ */
+var _title = function ( config )
+{
+	var title = config.title;
+
+	if ( typeof title === 'function' ) {
+		title = title();
+	}
+
+	return title.indexOf( '*' ) !== -1 ?
+		title.replace( '*', $('title').text() || 'Exported data' ) :
+		title;
+};
+
+/**
+ * Get the newline character(s)
+ *
+ * @param {object}	config Button configuration
+ * @return {string}				Newline character
+ */
+var _newLine = function ( config )
+{
+	return config.newline ?
+		config.newline :
+		navigator.userAgent.match(/Windows/) ?
+			'\r\n' :
+			'\n';
+};
+
+/**
+ * Combine the data from the `buttons.exportData` method into a string that
+ * will be used in the export file.
+ *
+ * @param	{DataTable.Api} dt		 DataTables API instance
+ * @param	{object}				config Button configuration
+ * @return {object}							 The data to export
+ */
+var _exportData = function ( dt, config )
+{
+	var newLine = _newLine( config );
+	var data = dt.buttons.exportData( config.exportOptions );
+	var boundary = config.fieldBoundary;
+	var separator = config.fieldSeparator;
+	var reBoundary = new RegExp( boundary, 'g' );
+	var escapeChar = config.escapeChar !== undefined ?
+		config.escapeChar :
+		'\\';
+	var join = function ( a ) {
+		var s = '';
+
+		// If there is a field boundary, then we might need to escape it in
+		// the source data
+		for ( var i=0, ien=a.length ; i<ien ; i++ ) {
+			if ( i > 0 ) {
+				s += separator;
+			}
+
+			s += boundary ?
+				boundary + ('' + a[i]).replace( reBoundary, escapeChar+boundary ) + boundary :
+				a[i];
+		}
+
+		return s;
+	};
+
+	var header = config.header ? join( data.header )+newLine : '';
+	var footer = config.footer && data.footer ? newLine+join( data.footer ) : '';
+	var body = [];
+
+	for ( var i=0, ien=data.body.length ; i<ien ; i++ ) {
+		body.push( join( data.body[i] ) );
+	}
+
+	return {
+		str: header + body.join( newLine ) + footer,
+		rows: body.length
+	};
+};
+
+/**
+ * Older versions of Safari (prior to tech preview 18) don't support the
+ * download option required.
+ *
+ * @return {Boolean} `true` if old Safari
+ */
+var _isDuffSafari = function ()
+{
+	var safari = navigator.userAgent.indexOf('Safari') !== -1 &&
+		navigator.userAgent.indexOf('Chrome') === -1 &&
+		navigator.userAgent.indexOf('Opera') === -1;
+
+	if ( ! safari ) {
+		return false;
+	}
+
+	var version = navigator.userAgent.match( /AppleWebKit\/(\d+\.\d+)/ );
+	if ( version && version.length > 1 && version[1]*1 < 603.1 ) {
+		return true;
+	}
+
+	return false;
+};
+
+/**
+ * Convert from numeric position to letter for column names in Excel
+ * @param  {int} n Column number
+ * @return {string} Column letter(s) name
+ */
+function createCellPos( n ){
+	var ordA = 'A'.charCodeAt(0);
+	var ordZ = 'Z'.charCodeAt(0);
+	var len = ordZ - ordA + 1;
+	var s = "";
+
+	while( n >= 0 ) {
+		s = String.fromCharCode(n % len + ordA) + s;
+		n = Math.floor(n / len) - 1;
+	}
+
+	return s;
+}
+
+try {
+	var _serialiser = new XMLSerializer();
+	var _ieExcel;
+}
+catch (t) {}
+
+/**
+ * Recursively add XML files from an object's structure to a ZIP file. This
+ * allows the XSLX file to be easily defined with an object's structure matching
+ * the files structure.
+ *
+ * @param {JSZip} zip ZIP package
+ * @param {object} obj Object to add (recursive)
+ */
+function _addToZip( zip, obj ) {
+	if ( _ieExcel === undefined ) {
+		// Detect if we are dealing with IE's _awful_ serialiser by seeing if it
+		// drop attributes
+		_ieExcel = _serialiser
+			.serializeToString(
+				$.parseXML( excelStrings['xl/worksheets/sheet1.xml'] )
+			)
+			.indexOf( 'xmlns:r' ) === -1;
+	}
+
+	$.each( obj, function ( name, val ) {
+		if ( $.isPlainObject( val ) ) {
+			var newDir = zip.folder( name );
+			_addToZip( newDir, val );
+		}
+		else {
+			if ( _ieExcel ) {
+				// IE's XML serialiser will drop some name space attributes from
+				// from the root node, so we need to save them. Do this by
+				// replacing the namespace nodes with a regular attribute that
+				// we convert back when serialised. Edge does not have this
+				// issue
+				var worksheet = val.childNodes[0];
+				var i, ien;
+				var attrs = [];
+
+				for ( i=worksheet.attributes.length-1 ; i>=0 ; i-- ) {
+					var attrName = worksheet.attributes[i].nodeName;
+					var attrValue = worksheet.attributes[i].nodeValue;
+
+					if ( attrName.indexOf( ':' ) !== -1 ) {
+						attrs.push( { name: attrName, value: attrValue } );
+
+						worksheet.removeAttribute( attrName );
+					}
+				}
+
+				for ( i=0, ien=attrs.length ; i<ien ; i++ ) {
+					var attr = val.createAttribute( attrs[i].name.replace( ':', '_dt_b_namespace_token_' ) );
+					attr.value = attrs[i].value;
+					worksheet.setAttributeNode( attr );
+				}
+			}
+
+			var str = _serialiser.serializeToString(val);
+
+			// Fix IE's XML
+			if ( _ieExcel ) {
+				// IE doesn't include the XML declaration
+				if ( str.indexOf( '<?xml' ) === -1 ) {
+					str = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+str;
+				}
+
+				// Return namespace attributes to being as such
+				str = str.replace( /_dt_b_namespace_token_/g, ':' );
+			}
+
+			// Safari, IE and Edge will put empty name space attributes onto
+			// various elements making them useless. This strips them out
+			str = str.replace( /<(.*?) xmlns=""(.*?)>/g, '<$1 $2>' );
+
+			zip.file( name, str );
+		}
+	} );
+}
+
+/**
+ * Create an XML node and add any children, attributes, etc without needing to
+ * be verbose in the DOM.
+ *
+ * @param  {object} doc      XML document
+ * @param  {string} nodeName Node name
+ * @param  {object} opts     Options - can be `attr` (attributes), `children`
+ *   (child nodes) and `text` (text content)
+ * @return {node}            Created node
+ */
+function _createNode( doc, nodeName, opts ) {
+	var tempNode = doc.createElement( nodeName );
+
+	if ( opts ) {
+		if ( opts.attr ) {
+			$(tempNode).attr( opts.attr );
+		}
+
+		if( opts.children ) {
+			$.each( opts.children, function ( key, value ) {
+				tempNode.appendChild( value );
+			});
+		}
+
+		if( opts.text ) {
+			tempNode.appendChild( doc.createTextNode( opts.text ) );
+		}
+	}
+
+	return tempNode;
+}
+
+/**
+ * Get the width for an Excel column based on the contents of that column
+ * @param  {object} data Data for export
+ * @param  {int}    col  Column index
+ * @return {int}         Column width
+ */
+function _excelColWidth( data, col ) {
+	var max = data.header[col].length;
+	var len, lineSplit, str;
+
+	if ( data.footer && data.footer[col].length > max ) {
+		max = data.footer[col].length;
+	}
+
+	for ( var i=0, ien=data.body.length ; i<ien ; i++ ) {
+		str = data.body[i][col].toString();
+
+		// If there is a newline character, workout the width of the column
+		// based on the longest line in the string
+		if ( str.indexOf('\n') !== -1 ) {
+			lineSplit = str.split('\n');
+			lineSplit.sort( function (a, b) {
+				return b.length - a.length;
+			} );
+
+			len = lineSplit[0].length;
+		}
+		else {
+			len = str.length;
+		}
+
+		if ( len > max ) {
+			max = len;
+		}
+
+		// Max width rather than having potentially massive column widths
+		if ( max > 40 ) {
+			break;
+		}
+	}
+
+	max *= 1.3;
+
+	// And a min width
+	return max > 6 ? max : 6;
+}
+
+// Excel - Pre-defined strings to build a basic XLSX file
+var excelStrings = {
+	"_rels/.rels":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+			'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+		'</Relationships>',
+
+	"xl/_rels/workbook.xml.rels":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+			'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+			'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+		'</Relationships>',
+
+	"[Content_Types].xml":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+			'<Default Extension="xml" ContentType="application/xml" />'+
+			'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />'+
+			'<Default Extension="jpeg" ContentType="image/jpeg" />'+
+			'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" />'+
+			'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" />'+
+			'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml" />'+
+		'</Types>',
+
+	"xl/workbook.xml":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+			'<fileVersion appName="xl" lastEdited="5" lowestEdited="5" rupBuild="24816"/>'+
+			'<workbookPr showInkAnnotation="0" autoCompressPictures="0"/>'+
+			'<bookViews>'+
+				'<workbookView xWindow="0" yWindow="0" windowWidth="25600" windowHeight="19020" tabRatio="500"/>'+
+			'</bookViews>'+
+			'<sheets>'+
+				'<sheet name="" sheetId="1" r:id="rId1"/>'+
+			'</sheets>'+
+		'</workbook>',
+
+	"xl/worksheets/sheet1.xml":
+		'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+		'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">'+
+			'<sheetData/>'+
+		'</worksheet>',
+
+	"xl/styles.xml":
+		'<?xml version="1.0" encoding="UTF-8"?>'+
+		'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">'+
+			'<numFmts count="6">'+
+				'<numFmt numFmtId="164" formatCode="#,##0.00_-\ [$$-45C]"/>'+
+				'<numFmt numFmtId="165" formatCode="&quot;£&quot;#,##0.00"/>'+
+				'<numFmt numFmtId="166" formatCode="[$€-2]\ #,##0.00"/>'+
+				'<numFmt numFmtId="167" formatCode="0.0%"/>'+
+				'<numFmt numFmtId="168" formatCode="#,##0;(#,##0)"/>'+
+				'<numFmt numFmtId="169" formatCode="#,##0.00;(#,##0.00)"/>'+
+			'</numFmts>'+
+			'<fonts count="5" x14ac:knownFonts="1">'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<color rgb="FFFFFFFF" />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<b />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<i />'+
+				'</font>'+
+				'<font>'+
+					'<sz val="11" />'+
+					'<name val="Calibri" />'+
+					'<u />'+
+				'</font>'+
+			'</fonts>'+
+			'<fills count="6">'+
+				'<fill>'+
+					'<patternFill patternType="none" />'+
+				'</fill>'+
+				'<fill/>'+ // Excel appears to use this as a dotted background regardless of values
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="FFD9D9D9" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="FFD99795" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="ffc6efce" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+				'<fill>'+
+					'<patternFill patternType="solid">'+
+						'<fgColor rgb="ffc6cfef" />'+
+						'<bgColor indexed="64" />'+
+					'</patternFill>'+
+				'</fill>'+
+			'</fills>'+
+			'<borders count="2">'+
+				'<border>'+
+					'<left />'+
+					'<right />'+
+					'<top />'+
+					'<bottom />'+
+					'<diagonal />'+
+				'</border>'+
+				'<border diagonalUp="false" diagonalDown="false">'+
+					'<left style="thin">'+
+						'<color auto="1" />'+
+					'</left>'+
+					'<right style="thin">'+
+						'<color auto="1" />'+
+					'</right>'+
+					'<top style="thin">'+
+						'<color auto="1" />'+
+					'</top>'+
+					'<bottom style="thin">'+
+						'<color auto="1" />'+
+					'</bottom>'+
+					'<diagonal />'+
+				'</border>'+
+			'</borders>'+
+			'<cellStyleXfs count="1">'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" />'+
+			'</cellStyleXfs>'+
+			'<cellXfs count="67">'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="2" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="4" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="5" borderId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="0" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="1" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="2" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="3" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="4" fillId="5" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="left"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="center"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="right"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment horizontal="fill"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment textRotation="90"/>'+
+				'</xf>'+
+				'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyAlignment="1">'+
+					'<alignment wrapText="1"/>'+
+				'</xf>'+
+				'<xf numFmtId="9"   fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="164" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="165" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="166" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="167" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="168" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="169" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="3" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="4" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="1" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+				'<xf numFmtId="2" fontId="0" fillId="0" borderId="0" applyFont="1" applyFill="1" applyBorder="1" xfId="0" applyNumberFormat="1"/>'+
+			'</cellXfs>'+
+			'<cellStyles count="1">'+
+				'<cellStyle name="Normal" xfId="0" builtinId="0" />'+
+			'</cellStyles>'+
+			'<dxfs count="0" />'+
+			'<tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleMedium4" />'+
+		'</styleSheet>'
+};
+// Note we could use 3 `for` loops for the styles, but when gzipped there is
+// virtually no difference in size, since the above can be easily compressed
+
+// Pattern matching for special number formats. Perhaps this should be exposed
+// via an API in future?
+// Ref: section 3.8.30 - built in formatters in open spreadsheet
+//   https://www.ecma-international.org/news/TC45_current_work/Office%20Open%20XML%20Part%204%20-%20Markup%20Language%20Reference.pdf
+var _excelSpecials = [
+	{ match: /^\-?\d+\.\d%$/,       style: 60, fmt: function (d) { return d/100; } }, // Precent with d.p.
+	{ match: /^\-?\d+\.?\d*%$/,     style: 56, fmt: function (d) { return d/100; } }, // Percent
+	{ match: /^\-?\$[\d,]+.?\d*$/,  style: 57 }, // Dollars
+	{ match: /^\-?£[\d,]+.?\d*$/,   style: 58 }, // Pounds
+	{ match: /^\-?€[\d,]+.?\d*$/,   style: 59 }, // Euros
+	{ match: /^\-?\d+$/,            style: 65 }, // Numbers without thousand separators
+	{ match: /^\-?\d+\.\d{2}$/,     style: 66 }, // Numbers 2 d.p. without thousands separators
+	{ match: /^\([\d,]+\)$/,        style: 61, fmt: function (d) { return -1 * d.replace(/[\(\)]/g, ''); } },  // Negative numbers indicated by brackets
+	{ match: /^\([\d,]+\.\d{2}\)$/, style: 62, fmt: function (d) { return -1 * d.replace(/[\(\)]/g, ''); } },  // Negative numbers indicated by brackets - 2d.p.
+	{ match: /^\-?[\d,]+$/,         style: 63 }, // Numbers with thousand separators
+	{ match: /^\-?[\d,]+\.\d{2}$/,  style: 64 }  // Numbers with 2 d.p. and thousands separators
+];
+
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Buttons
+ */
+
+//
+// Copy to clipboard
+//
+DataTable.ext.buttons.copyHtml5 = {
+	className: 'buttons-copy buttons-html5',
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.copy', 'Copy' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		var exportData = _exportData( dt, config );
+		var output = exportData.str;
+		var hiddenDiv = $('<div/>')
+			.css( {
+				height: 1,
+				width: 1,
+				overflow: 'hidden',
+				position: 'fixed',
+				top: 0,
+				left: 0
+			} );
+
+		if ( config.customize ) {
+			output = config.customize( output, config );
+		}
+
+		var textarea = $('<textarea readonly/>')
+			.val( output )
+			.appendTo( hiddenDiv );
+
+		// For browsers that support the copy execCommand, try to use it
+		if ( document.queryCommandSupported('copy') ) {
+			hiddenDiv.appendTo( dt.table().container() );
+			textarea[0].focus();
+			textarea[0].select();
+
+			try {
+				var successful = document.execCommand( 'copy' );
+				hiddenDiv.remove();
+
+				if (successful) {
+					dt.buttons.info(
+						dt.i18n( 'buttons.copyTitle', 'Copy to clipboard' ),
+						dt.i18n( 'buttons.copySuccess', {
+							1: 'Copied one row to clipboard',
+							_: 'Copied %d rows to clipboard'
+						}, exportData.rows ),
+						2000
+					);
+					return;
+				}
+			}
+			catch (t) {}
+		}
+
+		// Otherwise we show the text box and instruct the user to use it
+		var message = $('<span>'+dt.i18n( 'buttons.copyKeys',
+				'Press <i>ctrl</i> or <i>\u2318</i> + <i>C</i> to copy the table data<br>to your system clipboard.<br><br>'+
+				'To cancel, click this message or press escape.' )+'</span>'
+			)
+			.append( hiddenDiv );
+
+		dt.buttons.info( dt.i18n( 'buttons.copyTitle', 'Copy to clipboard' ), message, 0 );
+
+		// Select the text so when the user activates their system clipboard
+		// it will copy that text
+		textarea[0].focus();
+		textarea[0].select();
+
+		// Event to hide the message when the user is done
+		var container = $(message).closest('.dt-button-info');
+		var close = function () {
+			container.off( 'click.buttons-copy' );
+			$(document).off( '.buttons-copy' );
+			dt.buttons.info( false );
+		};
+
+		container.on( 'click.buttons-copy', close );
+		$(document)
+			.on( 'keydown.buttons-copy', function (e) {
+				if ( e.keyCode === 27 ) { // esc
+					close();
+				}
+			} )
+			.on( 'copy.buttons-copy cut.buttons-copy', function () {
+				close();
+			} );
+	},
+
+	exportOptions: {},
+
+	fieldSeparator: '\t',
+
+	fieldBoundary: '',
+
+	header: true,
+
+	footer: false
+};
+
+//
+// CSV export
+//
+DataTable.ext.buttons.csvHtml5 = {
+	bom: false,
+
+	className: 'buttons-csv buttons-html5',
+
+	available: function () {
+		return window.FileReader !== undefined && window.Blob;
+	},
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.csv', 'CSV' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		// Set the text
+		var output = _exportData( dt, config ).str;
+		var charset = config.charset;
+
+		if ( config.customize ) {
+			output = config.customize( output, config );
+		}
+
+		if ( charset !== false ) {
+			if ( ! charset ) {
+				charset = document.characterSet || document.charset;
+			}
+
+			if ( charset ) {
+				charset = ';charset='+charset;
+			}
+		}
+		else {
+			charset = '';
+		}
+
+		if ( config.bom ) {
+			output = '\ufeff' + output;
+		}
+
+		_saveAs(
+			new Blob( [output], {type: 'text/csv'+charset} ),
+			_filename( config ),
+			true
+		);
+	},
+
+	filename: '*',
+
+	extension: '.csv',
+
+	exportOptions: {},
+
+	fieldSeparator: ',',
+
+	fieldBoundary: '"',
+
+	escapeChar: '"',
+
+	charset: null,
+
+	header: true,
+
+	footer: false
+};
+
+//
+// Excel (xlsx) export
+//
+DataTable.ext.buttons.excelHtml5 = {
+	className: 'buttons-excel buttons-html5',
+
+	available: function () {
+		return window.FileReader !== undefined && _jsZip() !== undefined && ! _isDuffSafari() && _serialiser;
+	},
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.excel', 'Excel' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		var rowPos = 0;
+		var getXml = function ( type ) {
+			var str = excelStrings[ type ];
+
+			//str = str.replace( /xmlns:/g, 'xmlns_' ).replace( /mc:/g, 'mc_' );
+
+			return $.parseXML( str );
+		};
+		var rels = getXml('xl/worksheets/sheet1.xml');
+		var relsGet = rels.getElementsByTagName( "sheetData" )[0];
+
+		var xlsx = {
+			_rels: {
+				".rels": getXml('_rels/.rels')
+			},
+			xl: {
+				_rels: {
+					"workbook.xml.rels": getXml('xl/_rels/workbook.xml.rels')
+				},
+				"workbook.xml": getXml('xl/workbook.xml'),
+				"styles.xml": getXml('xl/styles.xml'),
+				"worksheets": {
+					"sheet1.xml": rels
+				}
+
+			},
+			"[Content_Types].xml": getXml('[Content_Types].xml')
+		};
+
+		var data = dt.buttons.exportData( config.exportOptions );
+		var currentRow, rowNode;
+		var addRow = function ( row ) {
+			currentRow = rowPos+1;
+			rowNode = _createNode( rels, "row", { attr: {r:currentRow} } );
+
+			for ( var i=0, ien=row.length ; i<ien ; i++ ) {
+				// Concat both the Cell Columns as a letter and the Row of the cell.
+				var cellId = createCellPos(i) + '' + currentRow;
+				var cell = null;
+
+				// For null, undefined of blank cell, continue so it doesn't create the _createNode
+				if ( row[i] === null || row[i] === undefined || row[i] === '' ) {
+					continue;
+				}
+
+				row[i] = $.trim( row[i] );
+
+				// Special number formatting options
+				for ( var j=0, jen=_excelSpecials.length ; j<jen ; j++ ) {
+					var special = _excelSpecials[j];
+
+					if ( row[i].match && row[i].match( special.match ) ) {
+						var val = row[i].replace(/[^\d\.\-]/g, '');
+
+						if ( special.fmt ) {
+							val = special.fmt( val );
+						}
+
+						cell = _createNode( rels, 'c', {
+							attr: {
+								r: cellId,
+								s: special.style
+							},
+							children: [
+								_createNode( rels, 'v', { text: val } )
+							]
+						} );
+
+						break;
+					}
+				}
+
+				if ( ! cell ) {
+					if ( typeof row[i] === 'number' || (
+						row[i].match &&
+						row[i].match(/^-?\d+(\.\d+)?$/) &&
+						! row[i].match(/^0\d+/) )
+					) {
+						// Detect numbers - don't match numbers with leading zeros
+						// or a negative anywhere but the start
+						cell = _createNode( rels, 'c', {
+							attr: {
+								t: 'n',
+								r: cellId
+							},
+							children: [
+								_createNode( rels, 'v', { text: row[i] } )
+							]
+						} );
+					}
+					else {
+						// String output - replace non standard characters for text output
+						var text = ! row[i].replace ?
+							row[i] :
+							row[i].replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
+
+						cell = _createNode( rels, 'c', {
+							attr: {
+								t: 'inlineStr',
+								r: cellId
+							},
+							children:{
+								row: _createNode( rels, 'is', {
+									children: {
+										row: _createNode( rels, 't', {
+											text: text
+										} )
+									}
+								} )
+							}
+						} );
+					}
+				}
+
+				rowNode.appendChild( cell );
+			}
+
+			relsGet.appendChild(rowNode);
+			rowPos++;
+		};
+
+		$( 'sheets sheet', xlsx.xl['workbook.xml'] ).attr( 'name', _sheetname( config ) );
+
+		if ( config.customizeData ) {
+			config.customizeData( data );
+		}
+
+		if ( config.header ) {
+			addRow( data.header, rowPos );
+			$('row c', rels).attr( 's', '2' ); // bold
+		}
+
+		for ( var n=0, ie=data.body.length ; n<ie ; n++ ) {
+			addRow( data.body[n], rowPos );
+		}
+
+		if ( config.footer && data.footer ) {
+			addRow( data.footer, rowPos);
+			$('row:last c', rels).attr( 's', '2' ); // bold
+		}
+
+		// Set column widths
+		var cols = _createNode( rels, 'cols' );
+		$('worksheet', rels).prepend( cols );
+
+		for ( var i=0, ien=data.header.length ; i<ien ; i++ ) {
+			cols.appendChild( _createNode( rels, 'col', {
+				attr: {
+					min: i+1,
+					max: i+1,
+					width: _excelColWidth( data, i ),
+					customWidth: 1
+				}
+			} ) );
+		}
+
+		// Let the developer customise the document if they want to
+		if ( config.customize ) {
+			config.customize( xlsx );
+		}
+
+		var jszip = _jsZip();
+		var zip = new jszip();
+		var zipConfig = {
+			type: 'blob',
+			mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+		};
+
+		_addToZip( zip, xlsx );
+
+		if ( zip.generateAsync ) {
+			// JSZip 3+
+			zip
+				.generateAsync( zipConfig )
+				.then( function ( blob ) {
+					_saveAs( blob, _filename( config ) );
+				} );
+		}
+		else {
+			// JSZip 2.5
+			_saveAs(
+				zip.generate( zipConfig ),
+				_filename( config )
+			);
+		}
+	},
+
+	filename: '*',
+
+	extension: '.xlsx',
+
+	exportOptions: {},
+
+	header: true,
+
+	footer: false
+};
+
+//
+// PDF export - using pdfMake - http://pdfmake.org
+//
+DataTable.ext.buttons.pdfHtml5 = {
+	className: 'buttons-pdf buttons-html5',
+
+	available: function () {
+		return window.FileReader !== undefined && _pdfMake();
+	},
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.pdf', 'PDF' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		var newLine = _newLine( config );
+		var data = dt.buttons.exportData( config.exportOptions );
+		var rows = [];
+
+		if ( config.header ) {
+			rows.push( $.map( data.header, function ( d ) {
+				return {
+					text: typeof d === 'string' ? d : d+'',
+					style: 'tableHeader'
+				};
+			} ) );
+		}
+
+		for ( var i=0, ien=data.body.length ; i<ien ; i++ ) {
+			rows.push( $.map( data.body[i], function ( d ) {
+				return {
+					text: typeof d === 'string' ? d : d+'',
+					style: i % 2 ? 'tableBodyEven' : 'tableBodyOdd'
+				};
+			} ) );
+		}
+
+		if ( config.footer && data.footer) {
+			rows.push( $.map( data.footer, function ( d ) {
+				return {
+					text: typeof d === 'string' ? d : d+'',
+					style: 'tableFooter'
+				};
+			} ) );
+		}
+
+		var doc = {
+			pageSize: config.pageSize,
+			pageOrientation: config.orientation,
+			content: [
+				{
+					table: {
+						headerRows: 1,
+						body: rows
+					},
+					layout: 'noBorders'
+				}
+			],
+			styles: {
+				tableHeader: {
+					bold: true,
+					fontSize: 11,
+					color: 'white',
+					fillColor: '#2d4154',
+					alignment: 'center'
+				},
+				tableBodyEven: {},
+				tableBodyOdd: {
+					fillColor: '#f3f3f3'
+				},
+				tableFooter: {
+					bold: true,
+					fontSize: 11,
+					color: 'white',
+					fillColor: '#2d4154'
+				},
+				title: {
+					alignment: 'center',
+					fontSize: 15
+				},
+				message: {}
+			},
+			defaultStyle: {
+				fontSize: 10
+			}
+		};
+
+		if ( config.message ) {
+      doc.content.unshift( {
+        text: typeof config.message == 'function' ? config.message(dt, button, config) : config.message,
+        style: 'message',
+        margin: [ 0, 0, 0, 12 ]
+      } );
+		}
+
+		if ( config.title ) {
+			doc.content.unshift( {
+				text: _title( config, false ),
+				style: 'title',
+				margin: [ 0, 0, 0, 12 ]
+			} );
+		}
+
+		if ( config.customize ) {
+			config.customize( doc, config );
+		}
+
+		var pdf = _pdfMake().createPdf( doc );
+
+		if ( config.download === 'open' && ! _isDuffSafari() ) {
+			pdf.open();
+		}
+		else {
+			pdf.getBuffer( function (buffer) {
+				var blob = new Blob( [buffer], {type:'application/pdf'} );
+
+				_saveAs( blob, _filename( config ) );
+			} );
+		}
+	},
+
+	title: '*',
+
+	filename: '*',
+
+	extension: '.pdf',
+
+	exportOptions: {},
+
+	orientation: 'portrait',
+
+	pageSize: 'A4',
+
+	header: true,
+
+	footer: false,
+
+	message: null,
+
+	customize: null,
+
+	download: 'download'
+};
+
+
+return DataTable.Buttons;
+}));
+
+},{"datatables.net":29,"datatables.net-buttons":28}],27:[function(require,module,exports){
+/*!
+ * Print button for Buttons and DataTables.
+ * 2016 SpryMedia Ltd - datatables.net/license
+ */
+
+(function( factory ){
+	if ( typeof define === 'function' && define.amd ) {
+		// AMD
+		define( ['jquery', 'datatables.net', 'datatables.net-buttons'], function ( $ ) {
+			return factory( $, window, document );
+		} );
+	}
+	else if ( typeof exports === 'object' ) {
+		// CommonJS
+		module.exports = function (root, $) {
+			if ( ! root ) {
+				root = window;
+			}
+
+			if ( ! $ || ! $.fn.dataTable ) {
+				$ = require('datatables.net')(root, $).$;
+			}
+
+			if ( ! $.fn.dataTable.Buttons ) {
+				require('datatables.net-buttons')(root, $);
+			}
+
+			return factory( $, root, root.document );
+		};
+	}
+	else {
+		// Browser
+		factory( jQuery, window, document );
+	}
+}(function( $, window, document, undefined ) {
+'use strict';
+var DataTable = $.fn.dataTable;
+
+
+var _link = document.createElement( 'a' );
+
+/**
+ * Convert a `link` tag's URL from a relative to an absolute address so it will
+ * work correctly in the popup window which has no base URL.
+ *
+ * @param  {node}     el Element to convert
+ */
+var _relToAbs = function( el ) {
+	var url;
+	var clone = $(el).clone()[0];
+	var linkHost;
+
+	if ( clone.nodeName.toLowerCase() === 'link' ) {
+		_link.href = clone.href;
+		linkHost = _link.host;
+
+		// IE doesn't have a trailing slash on the host
+		// Chrome has it on the pathname
+		if ( linkHost.indexOf('/') === -1 && _link.pathname.indexOf('/') !== 0) {
+			linkHost += '/';
+		}
+
+		clone.href = _link.protocol+"//"+linkHost+_link.pathname+_link.search;
+	}
+
+	return clone.outerHTML;
+};
+
+
+DataTable.ext.buttons.print = {
+	className: 'buttons-print',
+
+	text: function ( dt ) {
+		return dt.i18n( 'buttons.print', 'Print' );
+	},
+
+	action: function ( e, dt, button, config ) {
+		var data = dt.buttons.exportData( config.exportOptions );
+		var addRow = function ( d, tag ) {
+			var str = '<tr>';
+
+			for ( var i=0, ien=d.length ; i<ien ; i++ ) {
+				str += '<'+tag+'>'+d[i]+'</'+tag+'>';
+			}
+
+			return str + '</tr>';
+		};
+
+		// Construct a table for printing
+		var html = '<table class="'+dt.table().node().className+'">';
+
+		if ( config.header ) {
+			html += '<thead>'+ addRow( data.header, 'th' ) +'</thead>';
+		}
+
+		html += '<tbody>';
+		for ( var i=0, ien=data.body.length ; i<ien ; i++ ) {
+			html += addRow( data.body[i], 'td' );
+		}
+		html += '</tbody>';
+
+		if ( config.footer && data.footer ) {
+			html += '<tfoot>'+ addRow( data.footer, 'th' ) +'</tfoot>';
+		}
+
+		// Open a new window for the printable table
+		var win = window.open( '', '' );
+		var title = config.title;
+
+		if ( typeof title === 'function' ) {
+			title = title();
+		}
+
+		if ( title.indexOf( '*' ) !== -1 ) {
+			title= title.replace( '*', $('title').text() );
+		}
+
+		win.document.close();
+
+		// Inject the title and also a copy of the style and link tags from this
+		// document so the table can retain its base styling. Note that we have
+		// to use string manipulation as IE won't allow elements to be created
+		// in the host document and then appended to the new window.
+		var head = '<title>'+title+'</title>';
+		$('style, link').each( function () {
+			head += _relToAbs( this );
+		} );
+
+		try {
+			win.document.head.innerHTML = head; // Work around for Edge
+		}
+		catch (e) {
+			$(win.document.head).html( head ); // Old IE
+		}
+
+		// Inject the table and other surrounding information
+		win.document.body.innerHTML =
+			'<h1>'+title+'</h1>'+
+			'<div>'+
+				(typeof config.message === 'function' ?
+					config.message( dt, button, config ) :
+					config.message
+				)+
+			'</div>'+
+			html;
+
+		$(win.document.body).addClass('dt-print-view');
+
+		if ( config.customize ) {
+			config.customize( win );
+		}
+
+		setTimeout( function () {
+			if ( config.autoPrint ) {
+				win.print(); // blocking - so close will not
+				win.close(); // execute until this is done
+			}
+		}, 250 );
+	},
+
+	title: '*',
+
+	message: '',
+
+	exportOptions: {},
+
+	header: true,
+
+	footer: false,
+
+	autoPrint: true,
+
+	customize: null
+};
+
+
+return DataTable.Buttons;
+}));
+
+},{"datatables.net":29,"datatables.net-buttons":28}],28:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"datatables.net":29,"dup":22}],29:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18,"jquery":425}],30:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18,"jquery":425}],31:[function(require,module,exports){
 /**
  * Export echarts as CommonJS module
  */
@@ -23864,7 +28754,7 @@ require('./lib/component/toolbox');
 
 require('zrender/lib/vml/vml');
 
-},{"./lib/chart/bar":26,"./lib/chart/boxplot":34,"./lib/chart/candlestick":39,"./lib/chart/effectScatter":45,"./lib/chart/funnel":48,"./lib/chart/gauge":52,"./lib/chart/graph":56,"./lib/chart/heatmap":72,"./lib/chart/line":91,"./lib/chart/lines":96,"./lib/chart/map":101,"./lib/chart/parallel":108,"./lib/chart/pictorialBar":112,"./lib/chart/pie":113,"./lib/chart/radar":118,"./lib/chart/sankey":123,"./lib/chart/scatter":128,"./lib/chart/themeRiver":131,"./lib/chart/treemap":136,"./lib/component/brush":153,"./lib/component/dataZoom":160,"./lib/component/geo":177,"./lib/component/graphic":179,"./lib/component/grid":180,"./lib/component/legend":189,"./lib/component/markArea":194,"./lib/component/markLine":195,"./lib/component/markPoint":196,"./lib/component/parallel":206,"./lib/component/polar":208,"./lib/component/singleAxis":212,"./lib/component/timeline":213,"./lib/component/title":222,"./lib/component/toolbox":223,"./lib/component/tooltip":233,"./lib/component/visualMap":237,"./lib/echarts":297,"zrender/lib/vml/vml":412}],21:[function(require,module,exports){
+},{"./lib/chart/bar":37,"./lib/chart/boxplot":45,"./lib/chart/candlestick":50,"./lib/chart/effectScatter":56,"./lib/chart/funnel":59,"./lib/chart/gauge":63,"./lib/chart/graph":67,"./lib/chart/heatmap":83,"./lib/chart/line":102,"./lib/chart/lines":107,"./lib/chart/map":112,"./lib/chart/parallel":119,"./lib/chart/pictorialBar":123,"./lib/chart/pie":124,"./lib/chart/radar":129,"./lib/chart/sankey":134,"./lib/chart/scatter":139,"./lib/chart/themeRiver":142,"./lib/chart/treemap":147,"./lib/component/brush":164,"./lib/component/dataZoom":171,"./lib/component/geo":188,"./lib/component/graphic":190,"./lib/component/grid":191,"./lib/component/legend":200,"./lib/component/markArea":205,"./lib/component/markLine":206,"./lib/component/markPoint":207,"./lib/component/parallel":217,"./lib/component/polar":219,"./lib/component/singleAxis":223,"./lib/component/timeline":224,"./lib/component/title":233,"./lib/component/toolbox":234,"./lib/component/tooltip":244,"./lib/component/visualMap":248,"./lib/echarts":308,"zrender/lib/vml/vml":423}],32:[function(require,module,exports){
 'use strict';
 
 
@@ -23941,7 +28831,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = CoordinateSystemManager;
 
-},{"zrender/lib/core/util":375}],22:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],33:[function(require,module,exports){
 'use strict';
 
 
@@ -23960,7 +28850,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = ExtensionAPI;
 
-},{"zrender/lib/core/util":375}],23:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],34:[function(require,module,exports){
 
     var echarts = require('../echarts');
     var zrUtil = require('zrender/lib/core/util');
@@ -23996,7 +28886,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"../echarts":297,"zrender/lib/core/util":375}],24:[function(require,module,exports){
+},{"../echarts":308,"zrender/lib/core/util":386}],35:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -24050,7 +28940,7 @@ require('zrender/lib/vml/vml');
         );
     });
 
-},{"../echarts":297,"./roamHelper":25,"zrender/lib/core/util":375}],25:[function(require,module,exports){
+},{"../echarts":308,"./roamHelper":36,"zrender/lib/core/util":386}],36:[function(require,module,exports){
 
 
     var roamHelper = {};
@@ -24111,7 +29001,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = roamHelper;
 
-},{}],26:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -24136,7 +29026,7 @@ require('zrender/lib/vml/vml');
     // In case developer forget to include grid component
     require('../component/grid');
 
-},{"../component/grid":180,"../coord/cartesian/Grid":261,"../echarts":297,"../layout/barGrid":298,"./bar/BarSeries":27,"./bar/BarView":28,"zrender/lib/core/util":375}],27:[function(require,module,exports){
+},{"../component/grid":191,"../coord/cartesian/Grid":272,"../echarts":308,"../layout/barGrid":309,"./bar/BarSeries":38,"./bar/BarView":39,"zrender/lib/core/util":386}],38:[function(require,module,exports){
 
 
     module.exports = require('./BaseBarSeries').extend({
@@ -24148,7 +29038,7 @@ require('zrender/lib/vml/vml');
         brushSelector: 'rect'
     });
 
-},{"./BaseBarSeries":29}],28:[function(require,module,exports){
+},{"./BaseBarSeries":40}],39:[function(require,module,exports){
 'use strict';
 
 
@@ -24332,7 +29222,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = BarView;
 
-},{"../../echarts":297,"../../model/Model":303,"../../util/graphic":328,"./barItemStyle":32,"./helper":33,"zrender/lib/core/util":375}],29:[function(require,module,exports){
+},{"../../echarts":308,"../../model/Model":314,"../../util/graphic":339,"./barItemStyle":43,"./helper":44,"zrender/lib/core/util":386}],40:[function(require,module,exports){
 'use strict';
 
 
@@ -24403,7 +29293,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../model/Series":305,"../helper/createListFromArray":89}],30:[function(require,module,exports){
+},{"../../model/Series":316,"../helper/createListFromArray":100}],41:[function(require,module,exports){
 
 
     var PictorialBarSeries = require('./BaseBarSeries').extend({
@@ -24449,7 +29339,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = PictorialBarSeries;
 
-},{"./BaseBarSeries":29}],31:[function(require,module,exports){
+},{"./BaseBarSeries":40}],42:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -25203,7 +30093,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = BarView;
 
-},{"../../echarts":297,"../../util/graphic":328,"../../util/number":331,"../../util/symbol":332,"./helper":33,"zrender/lib/core/util":375}],32:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"../../util/number":342,"../../util/symbol":343,"./helper":44,"zrender/lib/core/util":386}],43:[function(require,module,exports){
 
 
 
@@ -25233,7 +30123,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{"../../model/mixin/makeStyleMapper":312}],33:[function(require,module,exports){
+},{"../../model/mixin/makeStyleMapper":323}],44:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -25286,7 +30176,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = helper;
 
-},{"../../util/graphic":328,"zrender/lib/core/util":375}],34:[function(require,module,exports){
+},{"../../util/graphic":339,"zrender/lib/core/util":386}],45:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -25298,7 +30188,7 @@ require('zrender/lib/vml/vml');
     echarts.registerLayout(require('./boxplot/boxplotLayout'));
 
 
-},{"../echarts":297,"./boxplot/BoxplotSeries":35,"./boxplot/BoxplotView":36,"./boxplot/boxplotLayout":37,"./boxplot/boxplotVisual":38}],35:[function(require,module,exports){
+},{"../echarts":308,"./boxplot/BoxplotSeries":46,"./boxplot/BoxplotView":47,"./boxplot/boxplotLayout":48,"./boxplot/boxplotVisual":49}],46:[function(require,module,exports){
 'use strict';
 
 
@@ -25370,7 +30260,7 @@ require('zrender/lib/vml/vml');
     module.exports = BoxplotSeries;
 
 
-},{"../../model/Series":305,"../helper/whiskerBoxCommon":90,"zrender/lib/core/util":375}],36:[function(require,module,exports){
+},{"../../model/Series":316,"../helper/whiskerBoxCommon":101,"zrender/lib/core/util":386}],47:[function(require,module,exports){
 'use strict';
 
 
@@ -25421,7 +30311,7 @@ require('zrender/lib/vml/vml');
     module.exports = BoxplotView;
 
 
-},{"../../util/graphic":328,"../../view/Chart":334,"../helper/whiskerBoxCommon":90,"zrender/lib/core/util":375}],37:[function(require,module,exports){
+},{"../../util/graphic":339,"../../view/Chart":345,"../helper/whiskerBoxCommon":101,"zrender/lib/core/util":386}],48:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -25603,7 +30493,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../util/number":331,"zrender/lib/core/util":375}],38:[function(require,module,exports){
+},{"../../util/number":342,"zrender/lib/core/util":386}],49:[function(require,module,exports){
 
 
     var borderColorQuery = ['itemStyle', 'normal', 'borderColor'];
@@ -25638,7 +30528,7 @@ require('zrender/lib/vml/vml');
 
     };
 
-},{}],39:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -25654,7 +30544,7 @@ require('zrender/lib/vml/vml');
     echarts.registerLayout(require('./candlestick/candlestickLayout'));
 
 
-},{"../echarts":297,"./candlestick/CandlestickSeries":40,"./candlestick/CandlestickView":41,"./candlestick/candlestickLayout":42,"./candlestick/candlestickVisual":43,"./candlestick/preprocessor":44}],40:[function(require,module,exports){
+},{"../echarts":308,"./candlestick/CandlestickSeries":51,"./candlestick/CandlestickView":52,"./candlestick/candlestickLayout":53,"./candlestick/candlestickVisual":54,"./candlestick/preprocessor":55}],51:[function(require,module,exports){
 'use strict';
 
 
@@ -25758,7 +30648,7 @@ require('zrender/lib/vml/vml');
     module.exports = CandlestickSeries;
 
 
-},{"../../model/Series":305,"../../util/format":327,"../helper/whiskerBoxCommon":90,"zrender/lib/core/util":375}],41:[function(require,module,exports){
+},{"../../model/Series":316,"../../util/format":338,"../helper/whiskerBoxCommon":101,"zrender/lib/core/util":386}],52:[function(require,module,exports){
 'use strict';
 
 
@@ -25813,7 +30703,7 @@ require('zrender/lib/vml/vml');
     module.exports = CandlestickView;
 
 
-},{"../../util/graphic":328,"../../view/Chart":334,"../helper/whiskerBoxCommon":90,"zrender/lib/core/util":375}],42:[function(require,module,exports){
+},{"../../util/graphic":339,"../../view/Chart":345,"../helper/whiskerBoxCommon":101,"zrender/lib/core/util":386}],53:[function(require,module,exports){
 
 
     var retrieve = require('zrender/lib/core/util').retrieve;
@@ -25935,7 +30825,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../util/number":331,"zrender/lib/core/util":375}],43:[function(require,module,exports){
+},{"../../util/number":342,"zrender/lib/core/util":386}],54:[function(require,module,exports){
 
 
     var positiveBorderColorQuery = ['itemStyle', 'normal', 'borderColor'];
@@ -25976,7 +30866,7 @@ require('zrender/lib/vml/vml');
 
     };
 
-},{}],44:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -25995,7 +30885,7 @@ require('zrender/lib/vml/vml');
     };
 
 
-},{"zrender/lib/core/util":375}],45:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],56:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -26011,7 +30901,7 @@ require('zrender/lib/vml/vml');
         require('../layout/points'), 'effectScatter'
     ));
 
-},{"../echarts":297,"../layout/points":299,"../visual/symbol":339,"./effectScatter/EffectScatterSeries":46,"./effectScatter/EffectScatterView":47,"zrender/lib/core/util":375}],46:[function(require,module,exports){
+},{"../echarts":308,"../layout/points":310,"../visual/symbol":350,"./effectScatter/EffectScatterSeries":57,"./effectScatter/EffectScatterView":58,"zrender/lib/core/util":386}],57:[function(require,module,exports){
 'use strict';
 
 
@@ -26080,7 +30970,7 @@ require('zrender/lib/vml/vml');
 
     });
 
-},{"../../model/Series":305,"../helper/createListFromArray":89}],47:[function(require,module,exports){
+},{"../../model/Series":316,"../helper/createListFromArray":100}],58:[function(require,module,exports){
 
 
     var SymbolDraw = require('../helper/SymbolDraw');
@@ -26112,7 +31002,7 @@ require('zrender/lib/vml/vml');
         dispose: function () {}
     });
 
-},{"../../echarts":297,"../helper/EffectSymbol":78,"../helper/SymbolDraw":86}],48:[function(require,module,exports){
+},{"../../echarts":308,"../helper/EffectSymbol":89,"../helper/SymbolDraw":97}],59:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -26126,7 +31016,7 @@ require('zrender/lib/vml/vml');
 
     echarts.registerProcessor(zrUtil.curry(require('../processor/dataFilter'), 'funnel'));
 
-},{"../echarts":297,"../processor/dataFilter":316,"../visual/dataColor":337,"./funnel/FunnelSeries":49,"./funnel/FunnelView":50,"./funnel/funnelLayout":51,"zrender/lib/core/util":375}],49:[function(require,module,exports){
+},{"../echarts":308,"../processor/dataFilter":327,"../visual/dataColor":348,"./funnel/FunnelSeries":60,"./funnel/FunnelView":61,"./funnel/funnelLayout":62,"zrender/lib/core/util":386}],60:[function(require,module,exports){
 'use strict';
 
 
@@ -26227,7 +31117,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = FunnelSeries;
 
-},{"../../data/List":293,"../../data/helper/completeDimensions":295,"../../echarts":297,"../../util/model":330}],50:[function(require,module,exports){
+},{"../../data/List":304,"../../data/helper/completeDimensions":306,"../../echarts":308,"../../util/model":341}],61:[function(require,module,exports){
 
 
     var graphic = require('../../util/graphic');
@@ -26444,7 +31334,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Funnel;
 
-},{"../../util/graphic":328,"../../view/Chart":334,"zrender/lib/core/util":375}],51:[function(require,module,exports){
+},{"../../util/graphic":339,"../../view/Chart":345,"zrender/lib/core/util":386}],62:[function(require,module,exports){
 
 
     var layout = require('../../util/layout');
@@ -26615,12 +31505,12 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"../../util/layout":329,"../../util/number":331}],52:[function(require,module,exports){
+},{"../../util/layout":340,"../../util/number":342}],63:[function(require,module,exports){
 
     require('./gauge/GaugeSeries');
     require('./gauge/GaugeView');
 
-},{"./gauge/GaugeSeries":53,"./gauge/GaugeView":54}],53:[function(require,module,exports){
+},{"./gauge/GaugeSeries":64,"./gauge/GaugeView":65}],64:[function(require,module,exports){
 
 
     var List = require('../../data/List');
@@ -26744,7 +31634,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = GaugeSeries;
 
-},{"../../data/List":293,"../../model/Series":305,"zrender/lib/core/util":375}],54:[function(require,module,exports){
+},{"../../data/List":304,"../../model/Series":316,"zrender/lib/core/util":386}],65:[function(require,module,exports){
 
 
     var PointerPath = require('./PointerPath');
@@ -27163,7 +32053,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = GaugeView;
 
-},{"../../util/graphic":328,"../../util/number":331,"../../view/Chart":334,"./PointerPath":55}],55:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/number":342,"../../view/Chart":345,"./PointerPath":66}],66:[function(require,module,exports){
 
 
     module.exports = require('zrender/lib/graphic/Path').extend({
@@ -27211,7 +32101,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"zrender/lib/graphic/Path":383}],56:[function(require,module,exports){
+},{"zrender/lib/graphic/Path":394}],67:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -27239,7 +32129,7 @@ require('zrender/lib/vml/vml');
         create: require('./graph/createView')
     });
 
-},{"../echarts":297,"../visual/symbol":339,"./graph/GraphSeries":57,"./graph/GraphView":58,"./graph/categoryFilter":60,"./graph/categoryVisual":61,"./graph/circularLayout":62,"./graph/createView":64,"./graph/edgeVisual":65,"./graph/forceLayout":67,"./graph/graphAction":68,"./graph/simpleLayout":69,"zrender/lib/core/util":375}],57:[function(require,module,exports){
+},{"../echarts":308,"../visual/symbol":350,"./graph/GraphSeries":68,"./graph/GraphView":69,"./graph/categoryFilter":71,"./graph/categoryVisual":72,"./graph/circularLayout":73,"./graph/createView":75,"./graph/edgeVisual":76,"./graph/forceLayout":78,"./graph/graphAction":79,"./graph/simpleLayout":80,"zrender/lib/core/util":386}],68:[function(require,module,exports){
 'use strict';
 
 
@@ -27509,7 +32399,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = GraphSeries;
 
-},{"../../data/List":293,"../../echarts":297,"../../model/Model":303,"../../util/format":327,"../../util/model":330,"../helper/createGraphFromNodeEdge":88,"zrender/lib/core/util":375}],58:[function(require,module,exports){
+},{"../../data/List":304,"../../echarts":308,"../../model/Model":314,"../../util/format":338,"../../util/model":341,"../helper/createGraphFromNodeEdge":99,"zrender/lib/core/util":386}],69:[function(require,module,exports){
 
 
 
@@ -27852,7 +32742,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../component/helper/RoamController":183,"../../echarts":297,"../../util/graphic":328,"../helper/LineDraw":82,"../helper/SymbolDraw":86,"./adjustEdge":59,"zrender/lib/core/util":375}],59:[function(require,module,exports){
+},{"../../component/helper/RoamController":194,"../../echarts":308,"../../util/graphic":339,"../helper/LineDraw":93,"../helper/SymbolDraw":97,"./adjustEdge":70,"zrender/lib/core/util":386}],70:[function(require,module,exports){
 
 
     var curveTool = require('zrender/lib/core/curve');
@@ -28014,7 +32904,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/curve":368,"zrender/lib/core/vector":376}],60:[function(require,module,exports){
+},{"zrender/lib/core/curve":379,"zrender/lib/core/vector":387}],71:[function(require,module,exports){
 
 
     module.exports = function (ecModel) {
@@ -28050,7 +32940,7 @@ require('zrender/lib/vml/vml');
         }, this);
     };
 
-},{}],61:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 
 
     module.exports = function (ecModel) {
@@ -28093,7 +32983,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],62:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 
     var circularLayoutHelper = require('./circularLayoutHelper');
     module.exports = function (ecModel) {
@@ -28104,7 +32994,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"./circularLayoutHelper":63}],63:[function(require,module,exports){
+},{"./circularLayoutHelper":74}],74:[function(require,module,exports){
 
     var vec2 = require('zrender/lib/core/vector');
     module.exports = function (seriesModel) {
@@ -28163,7 +33053,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/vector":376}],64:[function(require,module,exports){
+},{"zrender/lib/core/vector":387}],75:[function(require,module,exports){
 
     // FIXME Where to create the simple view coordinate system
     var View = require('../../coord/View');
@@ -28240,7 +33130,7 @@ require('zrender/lib/vml/vml');
         return viewList;
     };
 
-},{"../../coord/View":252,"../../util/layout":329,"zrender/lib/core/bbox":367}],65:[function(require,module,exports){
+},{"../../coord/View":263,"../../util/layout":340,"zrender/lib/core/bbox":378}],76:[function(require,module,exports){
 
 
     function normalize(a) {
@@ -28294,7 +33184,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],66:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 
 
     var vec2 = require('zrender/lib/core/vector');
@@ -28432,7 +33322,7 @@ require('zrender/lib/vml/vml');
         };
     };
 
-},{"zrender/lib/core/vector":376}],67:[function(require,module,exports){
+},{"zrender/lib/core/vector":387}],78:[function(require,module,exports){
 
 
     var forceHelper = require('./forceHelper');
@@ -28567,7 +33457,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"../../util/number":331,"./circularLayoutHelper":63,"./forceHelper":66,"./simpleLayoutHelper":71,"zrender/lib/core/util":375,"zrender/lib/core/vector":376}],68:[function(require,module,exports){
+},{"../../util/number":342,"./circularLayoutHelper":74,"./forceHelper":77,"./simpleLayoutHelper":82,"zrender/lib/core/util":386,"zrender/lib/core/vector":387}],79:[function(require,module,exports){
 
 
     var echarts = require('../../echarts');
@@ -28629,7 +33519,7 @@ require('zrender/lib/vml/vml');
     }, function () {});
 
 
-},{"../../action/roamHelper":25,"../../echarts":297}],69:[function(require,module,exports){
+},{"../../action/roamHelper":36,"../../echarts":308}],80:[function(require,module,exports){
 
 
     var simpleLayoutHelper = require('./simpleLayoutHelper');
@@ -28658,7 +33548,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"./simpleLayoutEdge":70,"./simpleLayoutHelper":71}],70:[function(require,module,exports){
+},{"./simpleLayoutEdge":81,"./simpleLayoutHelper":82}],81:[function(require,module,exports){
 
     var vec2 = require('zrender/lib/core/vector');
     module.exports = function (graph) {
@@ -28677,7 +33567,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/vector":376}],71:[function(require,module,exports){
+},{"zrender/lib/core/vector":387}],82:[function(require,module,exports){
 
 
     var simpleLayoutEdge = require('./simpleLayoutEdge');
@@ -28697,13 +33587,13 @@ require('zrender/lib/vml/vml');
         simpleLayoutEdge(graph);
     };
 
-},{"./simpleLayoutEdge":70}],72:[function(require,module,exports){
+},{"./simpleLayoutEdge":81}],83:[function(require,module,exports){
 
 
     require('./heatmap/HeatmapSeries');
     require('./heatmap/HeatmapView');
 
-},{"./heatmap/HeatmapSeries":74,"./heatmap/HeatmapView":75}],73:[function(require,module,exports){
+},{"./heatmap/HeatmapSeries":85,"./heatmap/HeatmapView":86}],84:[function(require,module,exports){
 /**
  * @file defines echarts Heatmap Chart
  * @author Ovilia (me@zhangwenli.com)
@@ -28853,7 +33743,7 @@ require('zrender/lib/vml/vml');
     module.exports = Heatmap;
 
 
-},{"zrender/lib/core/util":375}],74:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],85:[function(require,module,exports){
 
 
     var SeriesModel = require('../../model/Series');
@@ -28892,7 +33782,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../model/Series":305,"../helper/createListFromArray":89}],75:[function(require,module,exports){
+},{"../../model/Series":316,"../helper/createListFromArray":100}],86:[function(require,module,exports){
 
 
     var graphic = require('../../util/graphic');
@@ -29126,7 +34016,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../echarts":297,"../../util/graphic":328,"./HeatmapLayer":73,"zrender/lib/core/util":375}],76:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"./HeatmapLayer":84,"zrender/lib/core/util":386}],87:[function(require,module,exports){
 /**
  * Provide effect for line
  * @module echarts/chart/helper/EffectLine
@@ -29315,7 +34205,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = EffectLine;
 
-},{"../../util/graphic":328,"../../util/symbol":332,"./Line":81,"zrender/lib/core/curve":368,"zrender/lib/core/util":375,"zrender/lib/core/vector":376}],77:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/symbol":343,"./Line":92,"zrender/lib/core/curve":379,"zrender/lib/core/util":386,"zrender/lib/core/vector":387}],88:[function(require,module,exports){
 /**
  * Provide effect for line
  * @module echarts/chart/helper/EffectLine
@@ -29427,7 +34317,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = EffectPolyline;
 
-},{"./EffectLine":76,"./Polyline":84,"zrender/lib/core/util":375,"zrender/lib/core/vector":376}],78:[function(require,module,exports){
+},{"./EffectLine":87,"./Polyline":95,"zrender/lib/core/util":386,"zrender/lib/core/vector":387}],89:[function(require,module,exports){
 /**
  * Symbol with ripple effect
  * @module echarts/chart/helper/EffectSymbol
@@ -29657,7 +34547,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = EffectSymbol;
 
-},{"../../util/graphic":328,"../../util/number":331,"../../util/symbol":332,"./Symbol":85,"zrender/lib/core/util":375}],79:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/number":342,"../../util/symbol":343,"./Symbol":96,"zrender/lib/core/util":386}],90:[function(require,module,exports){
 // TODO Batch by color
 
 
@@ -29801,7 +34691,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = LargeLineDraw;
 
-},{"../../util/graphic":328,"zrender/lib/contain/line":355,"zrender/lib/contain/quadratic":358}],80:[function(require,module,exports){
+},{"../../util/graphic":339,"zrender/lib/contain/line":366,"zrender/lib/contain/quadratic":369}],91:[function(require,module,exports){
 // TODO Batch by color
 
 
@@ -29948,7 +34838,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = LargeSymbolDraw;
 
-},{"../../util/graphic":328,"../../util/symbol":332}],81:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/symbol":343}],92:[function(require,module,exports){
 /**
  * @module echarts/chart/helper/Line
  */
@@ -30316,7 +35206,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Line;
 
-},{"../../util/graphic":328,"../../util/number":331,"../../util/symbol":332,"./LinePath":83,"zrender/lib/core/util":375,"zrender/lib/core/vector":376}],82:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/number":342,"../../util/symbol":343,"./LinePath":94,"zrender/lib/core/util":386,"zrender/lib/core/vector":387}],93:[function(require,module,exports){
 /**
  * @module echarts/chart/helper/LineDraw
  */
@@ -30411,7 +35301,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = LineDraw;
 
-},{"../../util/graphic":328,"./Line":81}],83:[function(require,module,exports){
+},{"../../util/graphic":339,"./Line":92}],94:[function(require,module,exports){
 /**
  * Line path for bezier and straight line draw
  */
@@ -30464,7 +35354,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../util/graphic":328,"zrender/lib/core/vector":376}],84:[function(require,module,exports){
+},{"../../util/graphic":339,"zrender/lib/core/vector":387}],95:[function(require,module,exports){
 /**
  * @module echarts/chart/helper/Line
  */
@@ -30550,7 +35440,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Polyline;
 
-},{"../../util/graphic":328,"zrender/lib/core/util":375}],85:[function(require,module,exports){
+},{"../../util/graphic":339,"zrender/lib/core/util":386}],96:[function(require,module,exports){
 /**
  * @module echarts/chart/helper/Symbol
  */
@@ -30850,7 +35740,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Symbol;
 
-},{"../../util/graphic":328,"../../util/number":331,"../../util/symbol":332,"zrender/lib/core/util":375}],86:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/number":342,"../../util/symbol":343,"zrender/lib/core/util":386}],97:[function(require,module,exports){
 /**
  * @module echarts/chart/helper/SymbolDraw
  */
@@ -30978,7 +35868,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = SymbolDraw;
 
-},{"../../util/graphic":328,"./Symbol":85}],87:[function(require,module,exports){
+},{"../../util/graphic":339,"./Symbol":96}],98:[function(require,module,exports){
 /**
  * @module echarts/chart/helper/Symbol
  */
@@ -31194,7 +36084,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = WhiskerBoxDraw;
 
-},{"../../util/graphic":328,"zrender/lib/core/util":375,"zrender/lib/graphic/Path":383}],88:[function(require,module,exports){
+},{"../../util/graphic":339,"zrender/lib/core/util":386,"zrender/lib/graphic/Path":394}],99:[function(require,module,exports){
 
 
     var List = require('../../data/List');
@@ -31265,7 +36155,7 @@ require('zrender/lib/vml/vml');
         return graph;
     };
 
-},{"../../CoordinateSystem":21,"../../data/Graph":292,"../../data/List":293,"../../data/helper/completeDimensions":295,"../../data/helper/linkList":296,"./createListFromArray":89,"zrender/lib/core/util":375}],89:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"../../data/Graph":303,"../../data/List":304,"../../data/helper/completeDimensions":306,"../../data/helper/linkList":307,"./createListFromArray":100,"zrender/lib/core/util":386}],100:[function(require,module,exports){
 'use strict';
 
 
@@ -31584,7 +36474,7 @@ require('zrender/lib/vml/vml');
     module.exports = createListFromArray;
 
 
-},{"../../CoordinateSystem":21,"../../data/List":293,"../../data/helper/completeDimensions":295,"../../util/model":330,"zrender/lib/core/util":375}],90:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"../../data/List":304,"../../data/helper/completeDimensions":306,"../../util/model":341,"zrender/lib/core/util":386}],101:[function(require,module,exports){
 'use strict';
 
 
@@ -31724,7 +36614,7 @@ require('zrender/lib/vml/vml');
         viewMixin: viewMixin
     };
 
-},{"../../data/List":293,"../../data/helper/completeDimensions":295,"../helper/WhiskerBoxDraw":87,"zrender/lib/core/util":375}],91:[function(require,module,exports){
+},{"../../data/List":304,"../../data/helper/completeDimensions":306,"../helper/WhiskerBoxDraw":98,"zrender/lib/core/util":386}],102:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -31749,7 +36639,7 @@ require('zrender/lib/vml/vml');
     // In case developer forget to include grid component
     require('../component/grid');
 
-},{"../component/grid":180,"../echarts":297,"../layout/points":299,"../processor/dataSample":317,"../visual/symbol":339,"./line/LineSeries":92,"./line/LineView":93,"zrender/lib/core/util":375}],92:[function(require,module,exports){
+},{"../component/grid":191,"../echarts":308,"../layout/points":310,"../processor/dataSample":328,"../visual/symbol":350,"./line/LineSeries":103,"./line/LineView":104,"zrender/lib/core/util":386}],103:[function(require,module,exports){
 'use strict';
 
 
@@ -31836,7 +36726,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../model/Series":305,"../helper/createListFromArray":89}],93:[function(require,module,exports){
+},{"../../model/Series":316,"../helper/createListFromArray":100}],104:[function(require,module,exports){
 'use strict';
 // FIXME step not support polar
 
@@ -32538,7 +37428,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../util/graphic":328,"../../util/model":330,"../../view/Chart":334,"../helper/Symbol":85,"../helper/SymbolDraw":86,"./lineAnimationDiff":94,"./poly":95,"zrender/lib/core/util":375}],94:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/model":341,"../../view/Chart":345,"../helper/Symbol":96,"../helper/SymbolDraw":97,"./lineAnimationDiff":105,"./poly":106,"zrender/lib/core/util":386}],105:[function(require,module,exports){
 
 
     // var arrayDiff = require('zrender/lib/core/arrayDiff');
@@ -32748,7 +37638,7 @@ require('zrender/lib/vml/vml');
         };
     };
 
-},{}],95:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 // Poly path support NaN point
 
 
@@ -32999,7 +37889,7 @@ require('zrender/lib/vml/vml');
         })
     };
 
-},{"zrender/lib/core/vector":376,"zrender/lib/graphic/Path":383}],96:[function(require,module,exports){
+},{"zrender/lib/core/vector":387,"zrender/lib/graphic/Path":394}],107:[function(require,module,exports){
 
 
     require('./lines/LinesSeries');
@@ -33013,7 +37903,7 @@ require('zrender/lib/vml/vml');
         require('./lines/linesVisual')
     );
 
-},{"../echarts":297,"./lines/LinesSeries":97,"./lines/LinesView":98,"./lines/linesLayout":99,"./lines/linesVisual":100}],97:[function(require,module,exports){
+},{"../echarts":308,"./lines/LinesSeries":108,"./lines/LinesView":109,"./lines/linesLayout":110,"./lines/linesVisual":111}],108:[function(require,module,exports){
 'use strict';
 
 
@@ -33172,7 +38062,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../CoordinateSystem":21,"../../data/List":293,"../../model/Series":305,"../../util/format":327,"zrender/lib/core/util":375}],98:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"../../data/List":304,"../../model/Series":316,"../../util/format":338,"zrender/lib/core/util":386}],109:[function(require,module,exports){
 
 
     var LineDraw = require('../helper/LineDraw');
@@ -33268,7 +38158,7 @@ require('zrender/lib/vml/vml');
         dispose: function () {}
     });
 
-},{"../../echarts":297,"../helper/EffectLine":76,"../helper/EffectPolyline":77,"../helper/LargeLineDraw":79,"../helper/Line":81,"../helper/LineDraw":82,"../helper/Polyline":84}],99:[function(require,module,exports){
+},{"../../echarts":308,"../helper/EffectLine":87,"../helper/EffectPolyline":88,"../helper/LargeLineDraw":90,"../helper/Line":92,"../helper/LineDraw":93,"../helper/Polyline":95}],110:[function(require,module,exports){
 
 
     module.exports = function (ecModel) {
@@ -33312,7 +38202,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],100:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 
 
     function normalize(a) {
@@ -33351,7 +38241,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],101:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -33387,7 +38277,7 @@ require('zrender/lib/vml/vml');
         method: 'unSelect'
     }]);
 
-},{"../action/createDataSelectAction":23,"../action/geoRoam":24,"../coord/geo/geoCreator":270,"../echarts":297,"./map/MapSeries":102,"./map/MapView":103,"./map/backwardCompat":104,"./map/mapDataStatistic":105,"./map/mapSymbolLayout":106,"./map/mapVisual":107}],102:[function(require,module,exports){
+},{"../action/createDataSelectAction":34,"../action/geoRoam":35,"../coord/geo/geoCreator":281,"../echarts":308,"./map/MapSeries":113,"./map/MapView":114,"./map/backwardCompat":115,"./map/mapDataStatistic":116,"./map/mapSymbolLayout":117,"./map/mapVisual":118}],113:[function(require,module,exports){
 
 
     var List = require('../../data/List');
@@ -33633,7 +38523,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = MapSeries;
 
-},{"../../component/helper/selectableMixin":187,"../../coord/geo/geoCreator":270,"../../data/List":293,"../../data/helper/completeDimensions":295,"../../model/Series":305,"../../util/format":327,"zrender/lib/core/util":375}],103:[function(require,module,exports){
+},{"../../component/helper/selectableMixin":198,"../../coord/geo/geoCreator":281,"../../data/List":304,"../../data/helper/completeDimensions":306,"../../model/Series":316,"../../util/format":338,"zrender/lib/core/util":386}],114:[function(require,module,exports){
 
 
     // var zrUtil = require('zrender/lib/core/util');
@@ -33785,7 +38675,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../component/helper/MapDraw":182,"../../echarts":297,"../../util/graphic":328}],104:[function(require,module,exports){
+},{"../../component/helper/MapDraw":193,"../../echarts":308,"../../util/graphic":339}],115:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -33806,7 +38696,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/util":375}],105:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],116:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -33890,7 +38780,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/util":375}],106:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],117:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -33949,7 +38839,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/util":375}],107:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],118:[function(require,module,exports){
 
     module.exports = function (ecModel) {
         ecModel.eachSeriesByType('map', function (seriesModel) {
@@ -33967,7 +38857,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],108:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -33980,7 +38870,7 @@ require('zrender/lib/vml/vml');
     echarts.registerVisual(require('./parallel/parallelVisual'));
 
 
-},{"../component/parallel":206,"../echarts":297,"./parallel/ParallelSeries":109,"./parallel/ParallelView":110,"./parallel/parallelVisual":111}],109:[function(require,module,exports){
+},{"../component/parallel":217,"../echarts":308,"./parallel/ParallelSeries":120,"./parallel/ParallelView":121,"./parallel/parallelVisual":122}],120:[function(require,module,exports){
 
 
     var List = require('../../data/List');
@@ -34139,7 +39029,7 @@ require('zrender/lib/vml/vml');
         return dataDims;
     }
 
-},{"../../data/List":293,"../../data/helper/completeDimensions":295,"../../model/Series":305,"zrender/lib/core/util":375}],110:[function(require,module,exports){
+},{"../../data/List":304,"../../data/helper/completeDimensions":306,"../../model/Series":316,"zrender/lib/core/util":386}],121:[function(require,module,exports){
 
 
     var graphic = require('../../util/graphic');
@@ -34378,7 +39268,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = ParallelView;
 
-},{"../../util/graphic":328,"../../view/Chart":334,"zrender/lib/core/util":375}],111:[function(require,module,exports){
+},{"../../util/graphic":339,"../../view/Chart":345,"zrender/lib/core/util":386}],122:[function(require,module,exports){
 
 
     module.exports = function (ecModel) {
@@ -34413,7 +39303,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],112:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -34435,7 +39325,7 @@ require('zrender/lib/vml/vml');
     // In case developer forget to include grid component
     require('../component/grid');
 
-},{"../component/grid":180,"../coord/cartesian/Grid":261,"../echarts":297,"../layout/barGrid":298,"../visual/symbol":339,"./bar/PictorialBarSeries":30,"./bar/PictorialBarView":31,"zrender/lib/core/util":375}],113:[function(require,module,exports){
+},{"../component/grid":191,"../coord/cartesian/Grid":272,"../echarts":308,"../layout/barGrid":309,"../visual/symbol":350,"./bar/PictorialBarSeries":41,"./bar/PictorialBarView":42,"zrender/lib/core/util":386}],124:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -34466,7 +39356,7 @@ require('zrender/lib/vml/vml');
 
     echarts.registerProcessor(zrUtil.curry(require('../processor/dataFilter'), 'pie'));
 
-},{"../action/createDataSelectAction":23,"../echarts":297,"../processor/dataFilter":316,"../visual/dataColor":337,"./pie/PieSeries":114,"./pie/PieView":115,"./pie/pieLayout":117,"zrender/lib/core/util":375}],114:[function(require,module,exports){
+},{"../action/createDataSelectAction":34,"../echarts":308,"../processor/dataFilter":327,"../visual/dataColor":348,"./pie/PieSeries":125,"./pie/PieView":126,"./pie/pieLayout":128,"zrender/lib/core/util":386}],125:[function(require,module,exports){
 'use strict';
 
 
@@ -34612,7 +39502,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = PieSeries;
 
-},{"../../component/helper/selectableMixin":187,"../../data/List":293,"../../data/helper/completeDimensions":295,"../../echarts":297,"../../util/model":330,"zrender/lib/core/util":375}],115:[function(require,module,exports){
+},{"../../component/helper/selectableMixin":198,"../../data/List":304,"../../data/helper/completeDimensions":306,"../../echarts":308,"../../util/model":341,"zrender/lib/core/util":386}],126:[function(require,module,exports){
 
 
     var graphic = require('../../util/graphic');
@@ -35014,7 +39904,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Pie;
 
-},{"../../util/graphic":328,"../../view/Chart":334,"zrender/lib/core/util":375}],116:[function(require,module,exports){
+},{"../../util/graphic":339,"../../view/Chart":345,"zrender/lib/core/util":386}],127:[function(require,module,exports){
 'use strict';
 // FIXME emphasis label position is not same with normal label position
 
@@ -35241,7 +40131,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{"zrender/lib/contain/text":359}],117:[function(require,module,exports){
+},{"zrender/lib/contain/text":370}],128:[function(require,module,exports){
 // TODO minAngle
 
 
@@ -35383,7 +40273,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"../../util/number":331,"./labelLayout":116,"zrender/lib/core/util":375}],118:[function(require,module,exports){
+},{"../../util/number":342,"./labelLayout":127,"zrender/lib/core/util":386}],129:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -35407,7 +40297,7 @@ require('zrender/lib/vml/vml');
 
     echarts.registerPreprocessor(require('./radar/backwardCompat'));
 
-},{"../component/radar":209,"../echarts":297,"../processor/dataFilter":316,"../visual/dataColor":337,"../visual/symbol":339,"./radar/RadarSeries":119,"./radar/RadarView":120,"./radar/backwardCompat":121,"./radar/radarLayout":122,"zrender/lib/core/util":375}],119:[function(require,module,exports){
+},{"../component/radar":220,"../echarts":308,"../processor/dataFilter":327,"../visual/dataColor":348,"../visual/symbol":350,"./radar/RadarSeries":130,"./radar/RadarView":131,"./radar/backwardCompat":132,"./radar/radarLayout":133,"zrender/lib/core/util":386}],130:[function(require,module,exports){
 'use strict';
 
 
@@ -35484,7 +40374,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = RadarSeries;
 
-},{"../../data/List":293,"../../data/helper/completeDimensions":295,"../../model/Series":305,"../../util/format":327,"zrender/lib/core/util":375}],120:[function(require,module,exports){
+},{"../../data/List":304,"../../data/helper/completeDimensions":306,"../../model/Series":316,"../../util/format":338,"zrender/lib/core/util":386}],131:[function(require,module,exports){
 
 
     var graphic = require('../../util/graphic');
@@ -35706,7 +40596,7 @@ require('zrender/lib/vml/vml');
         dispose: function () {}
     });
 
-},{"../../echarts":297,"../../util/graphic":328,"../../util/symbol":332,"zrender/lib/core/util":375}],121:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"../../util/symbol":343,"zrender/lib/core/util":386}],132:[function(require,module,exports){
 // Backward compat for radar chart in 2
 
 
@@ -35743,7 +40633,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{"zrender/lib/core/util":375}],122:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],133:[function(require,module,exports){
 
 
     module.exports = function (ecModel) {
@@ -35772,7 +40662,7 @@ require('zrender/lib/vml/vml');
         });
     };
 
-},{}],123:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -35782,7 +40672,7 @@ require('zrender/lib/vml/vml');
     echarts.registerLayout(require('./sankey/sankeyLayout'));
     echarts.registerVisual(require('./sankey/sankeyVisual'));
 
-},{"../echarts":297,"./sankey/SankeySeries":124,"./sankey/SankeyView":125,"./sankey/sankeyLayout":126,"./sankey/sankeyVisual":127}],124:[function(require,module,exports){
+},{"../echarts":308,"./sankey/SankeySeries":135,"./sankey/SankeyView":136,"./sankey/sankeyLayout":137,"./sankey/sankeyVisual":138}],135:[function(require,module,exports){
 /**
  * @file Get initial data and define sankey view's series model
  * @author Deqing Li(annong035@gmail.com)
@@ -35915,7 +40805,7 @@ require('zrender/lib/vml/vml');
     module.exports = SankeySeries;
 
 
-},{"../../model/Series":305,"../../util/format":327,"../helper/createGraphFromNodeEdge":88}],125:[function(require,module,exports){
+},{"../../model/Series":316,"../../util/format":338,"../helper/createGraphFromNodeEdge":99}],136:[function(require,module,exports){
 /**
  * @file  The file used to draw sankey view
  * @author  Deqing Li(annong035@gmail.com)
@@ -36118,7 +41008,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../echarts":297,"../../util/graphic":328,"zrender/lib/core/util":375}],126:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"zrender/lib/core/util":386}],137:[function(require,module,exports){
 /**
  * @file The layout algorithm of sankey view
  * @author  Deqing Li(annong035@gmail.com)
@@ -36490,7 +41380,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../util/array/nest":324,"../../util/layout":329,"zrender/lib/core/util":375}],127:[function(require,module,exports){
+},{"../../util/array/nest":335,"../../util/layout":340,"zrender/lib/core/util":386}],138:[function(require,module,exports){
 /**
  * @file Visual encoding for sankey view
  * @author  Deqing Li(annong035@gmail.com)
@@ -36534,7 +41424,7 @@ require('zrender/lib/vml/vml');
     };
 
 
-},{"../../visual/VisualMapping":336,"zrender/lib/core/util":375}],128:[function(require,module,exports){
+},{"../../visual/VisualMapping":347,"zrender/lib/core/util":386}],139:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -36553,7 +41443,7 @@ require('zrender/lib/vml/vml');
     // In case developer forget to include grid component
     require('../component/grid');
 
-},{"../component/grid":180,"../echarts":297,"../layout/points":299,"../visual/symbol":339,"./scatter/ScatterSeries":129,"./scatter/ScatterView":130,"zrender/lib/core/util":375}],129:[function(require,module,exports){
+},{"../component/grid":191,"../echarts":308,"../layout/points":310,"../visual/symbol":350,"./scatter/ScatterSeries":140,"./scatter/ScatterView":141,"zrender/lib/core/util":386}],140:[function(require,module,exports){
 'use strict';
 
 
@@ -36618,7 +41508,7 @@ require('zrender/lib/vml/vml');
 
     });
 
-},{"../../model/Series":305,"../helper/createListFromArray":89}],130:[function(require,module,exports){
+},{"../../model/Series":316,"../helper/createListFromArray":100}],141:[function(require,module,exports){
 
 
     var SymbolDraw = require('../helper/SymbolDraw');
@@ -36663,7 +41553,7 @@ require('zrender/lib/vml/vml');
         dispose: function () {}
     });
 
-},{"../../echarts":297,"../helper/LargeSymbolDraw":80,"../helper/SymbolDraw":86}],131:[function(require,module,exports){
+},{"../../echarts":308,"../helper/LargeSymbolDraw":91,"../helper/SymbolDraw":97}],142:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -36683,7 +41573,7 @@ require('zrender/lib/vml/vml');
         zrUtil.curry(require('../processor/dataFilter'), 'themeRiver')
     );
 
-},{"../component/singleAxis":212,"../echarts":297,"../processor/dataFilter":316,"./themeRiver/ThemeRiverSeries":132,"./themeRiver/ThemeRiverView":133,"./themeRiver/themeRiverLayout":134,"./themeRiver/themeRiverVisual":135,"zrender/lib/core/util":375}],132:[function(require,module,exports){
+},{"../component/singleAxis":223,"../echarts":308,"../processor/dataFilter":327,"./themeRiver/ThemeRiverSeries":143,"./themeRiver/ThemeRiverView":144,"./themeRiver/themeRiverLayout":145,"./themeRiver/themeRiverVisual":146,"zrender/lib/core/util":386}],143:[function(require,module,exports){
 'use strict';
 /**
  * @file  Define the themeRiver view's series model
@@ -37010,7 +41900,7 @@ require('zrender/lib/vml/vml');
     module.exports = ThemeRiverSeries;
 
 
-},{"../../data/List":293,"../../data/helper/completeDimensions":295,"../../model/Series":305,"../../util/array/nest":324,"../../util/format":327,"zrender/lib/core/util":375}],133:[function(require,module,exports){
+},{"../../data/List":304,"../../data/helper/completeDimensions":306,"../../model/Series":316,"../../util/array/nest":335,"../../util/format":338,"zrender/lib/core/util":386}],144:[function(require,module,exports){
 /**
  * @file  The file used to draw themeRiver view
  * @author  Deqing Li(annong035@gmail.com)
@@ -37190,7 +42080,7 @@ require('zrender/lib/vml/vml');
 
 
 
-},{"../../data/DataDiffer":291,"../../echarts":297,"../../util/graphic":328,"../line/poly":95,"zrender/lib/core/util":375}],134:[function(require,module,exports){
+},{"../../data/DataDiffer":302,"../../echarts":308,"../../util/graphic":339,"../line/poly":106,"zrender/lib/core/util":386}],145:[function(require,module,exports){
 /**
  * @file  Using layout algorithm transform the raw data to layout information.
  * @author Deqing Li(annong035@gmail.com)
@@ -37335,7 +42225,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../util/number":331,"zrender/lib/core/util":375}],135:[function(require,module,exports){
+},{"../../util/number":342,"zrender/lib/core/util":386}],146:[function(require,module,exports){
 /**
  * @file Visual encoding for themeRiver view
  * @author  Deqing Li(annong035@gmail.com)
@@ -37357,7 +42247,7 @@ require('zrender/lib/vml/vml');
     };
 
 
-},{}],136:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -37370,7 +42260,7 @@ require('zrender/lib/vml/vml');
 
     echarts.registerLayout(require('./treemap/treemapLayout'));
 
-},{"../echarts":297,"./treemap/TreemapSeries":138,"./treemap/TreemapView":139,"./treemap/treemapAction":141,"./treemap/treemapLayout":142,"./treemap/treemapVisual":143}],137:[function(require,module,exports){
+},{"../echarts":308,"./treemap/TreemapSeries":149,"./treemap/TreemapView":150,"./treemap/treemapAction":152,"./treemap/treemapLayout":153,"./treemap/treemapVisual":154}],148:[function(require,module,exports){
  
 
     var graphic = require('../../util/graphic');
@@ -37542,7 +42432,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Breadcrumb;
 
-},{"../../util/graphic":328,"../../util/layout":329,"./helper":140,"zrender/lib/core/util":375}],138:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/layout":340,"./helper":151,"zrender/lib/core/util":386}],149:[function(require,module,exports){
 
 
     var SeriesModel = require('../../model/Series');
@@ -37899,7 +42789,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../data/Tree":294,"../../model/Model":303,"../../model/Series":305,"../../util/format":327,"./helper":140,"zrender/lib/core/util":375}],139:[function(require,module,exports){
+},{"../../data/Tree":305,"../../model/Model":314,"../../model/Series":316,"../../util/format":338,"./helper":151,"zrender/lib/core/util":386}],150:[function(require,module,exports){
  
 
     var zrUtil = require('zrender/lib/core/util');
@@ -38779,7 +43669,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../component/helper/RoamController":183,"../../data/DataDiffer":291,"../../echarts":297,"../../util/animation":323,"../../util/graphic":328,"./Breadcrumb":137,"./helper":140,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/matrix":373,"zrender/lib/core/util":375}],140:[function(require,module,exports){
+},{"../../component/helper/RoamController":194,"../../data/DataDiffer":302,"../../echarts":308,"../../util/animation":334,"../../util/graphic":339,"./Breadcrumb":148,"./helper":151,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/matrix":384,"zrender/lib/core/util":386}],151:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -38843,7 +43733,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = helper;
 
-},{"zrender/lib/core/util":375}],141:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],152:[function(require,module,exports){
 /**
  * @file Treemap action
  */
@@ -38889,7 +43779,7 @@ require('zrender/lib/vml/vml');
     );
 
 
-},{"../../echarts":297,"./helper":140}],142:[function(require,module,exports){
+},{"../../echarts":308,"./helper":151}],153:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -39440,7 +44330,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = update;
 
-},{"../../util/layout":329,"../../util/number":331,"./helper":140,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/util":375}],143:[function(require,module,exports){
+},{"../../util/layout":340,"../../util/number":342,"./helper":151,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/util":386}],154:[function(require,module,exports){
 
 
     var VisualMapping = require('../../visual/VisualMapping');
@@ -39668,7 +44558,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../visual/VisualMapping":336,"zrender/lib/core/util":375,"zrender/lib/tool/color":406}],144:[function(require,module,exports){
+},{"../../visual/VisualMapping":347,"zrender/lib/core/util":386,"zrender/lib/tool/color":417}],155:[function(require,module,exports){
 'use strict';
 
 
@@ -39676,7 +44566,7 @@ require('zrender/lib/vml/vml');
 
     require('./axis/AngleAxisView');
 
-},{"../coord/polar/polarCreator":283,"./axis/AngleAxisView":146}],145:[function(require,module,exports){
+},{"../coord/polar/polarCreator":294,"./axis/AngleAxisView":157}],156:[function(require,module,exports){
 'use strict';
 // TODO boundaryGap
 
@@ -39685,7 +44575,7 @@ require('zrender/lib/vml/vml');
 
     require('./axis/AxisView');
 
-},{"../coord/cartesian/AxisModel":258,"./axis/AxisView":148}],146:[function(require,module,exports){
+},{"../coord/cartesian/AxisModel":269,"./axis/AxisView":159}],157:[function(require,module,exports){
 'use strict';
 
 
@@ -39917,7 +44807,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../echarts":297,"../../model/Model":303,"../../util/graphic":328,"zrender/lib/core/util":375}],147:[function(require,module,exports){
+},{"../../echarts":308,"../../model/Model":314,"../../util/graphic":339,"zrender/lib/core/util":386}],158:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -40513,7 +45403,7 @@ require('zrender/lib/vml/vml');
     module.exports = AxisBuilder;
 
 
-},{"../../model/Model":303,"../../util/format":327,"../../util/graphic":328,"../../util/number":331,"zrender/lib/core/util":375,"zrender/lib/core/vector":376}],148:[function(require,module,exports){
+},{"../../model/Model":314,"../../util/format":338,"../../util/graphic":339,"../../util/number":342,"zrender/lib/core/util":386,"zrender/lib/core/vector":387}],159:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -40802,7 +45692,7 @@ require('zrender/lib/vml/vml');
         return layout;
     }
 
-},{"../../echarts":297,"../../util/graphic":328,"./AxisBuilder":147,"zrender/lib/core/util":375}],149:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"./AxisBuilder":158,"zrender/lib/core/util":386}],160:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -40979,7 +45869,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = AxisView;
 
-},{"../../echarts":297,"../../util/graphic":328,"../helper/BrushController":181,"./AxisBuilder":147,"zrender/lib/core/util":375}],150:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"../helper/BrushController":192,"./AxisBuilder":158,"zrender/lib/core/util":386}],161:[function(require,module,exports){
 'use strict';
 
 
@@ -41123,7 +46013,7 @@ require('zrender/lib/vml/vml');
         };
     }
 
-},{"../../echarts":297,"../../util/graphic":328,"./AxisBuilder":147,"zrender/lib/core/util":375}],151:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"./AxisBuilder":158,"zrender/lib/core/util":386}],162:[function(require,module,exports){
 
 
     var AxisBuilder = require('./AxisBuilder');
@@ -41290,7 +46180,7 @@ require('zrender/lib/vml/vml');
     module.exports = AxisView;
 
 
-},{"../../echarts":297,"../../util/graphic":328,"./AxisBuilder":147,"zrender/lib/core/util":375}],152:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"./AxisBuilder":158,"zrender/lib/core/util":386}],163:[function(require,module,exports){
 
 
     var echarts = require('../../echarts');
@@ -41327,7 +46217,7 @@ require('zrender/lib/vml/vml');
 
     });
 
-},{"../../echarts":297}],153:[function(require,module,exports){
+},{"../../echarts":308}],164:[function(require,module,exports){
 /**
  * Brush component entry
  */
@@ -41345,7 +46235,7 @@ require('zrender/lib/vml/vml');
     require('./toolbox/feature/Brush');
 
 
-},{"../echarts":297,"./brush/BrushModel":154,"./brush/BrushView":155,"./brush/brushAction":156,"./brush/preprocessor":157,"./brush/visualEncoding":159,"./toolbox/feature/Brush":226}],154:[function(require,module,exports){
+},{"../echarts":308,"./brush/BrushModel":165,"./brush/BrushView":166,"./brush/brushAction":167,"./brush/preprocessor":168,"./brush/visualEncoding":170,"./toolbox/feature/Brush":237}],165:[function(require,module,exports){
 /**
  * @file Brush model
  */
@@ -41495,7 +46385,7 @@ require('zrender/lib/vml/vml');
     module.exports = BrushModel;
 
 
-},{"../../echarts":297,"../../model/Model":303,"../../visual/visualSolution":341,"zrender/lib/core/util":375}],155:[function(require,module,exports){
+},{"../../echarts":308,"../../model/Model":314,"../../visual/visualSolution":352,"zrender/lib/core/util":386}],166:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -41597,7 +46487,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../echarts":297,"../helper/BrushController":181,"../helper/brushHelper":184,"zrender/lib/core/util":375}],156:[function(require,module,exports){
+},{"../../echarts":308,"../helper/BrushController":192,"../helper/brushHelper":195,"zrender/lib/core/util":386}],167:[function(require,module,exports){
 /**
  * @file Brush action
  */
@@ -41648,7 +46538,7 @@ require('zrender/lib/vml/vml');
         function () {}
     );
 
-},{"../../echarts":297}],157:[function(require,module,exports){
+},{"../../echarts":308}],168:[function(require,module,exports){
 /**
  * @file brush preprocessor
  */
@@ -41714,7 +46604,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"zrender/lib/core/util":375}],158:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],169:[function(require,module,exports){
 
 
     var polygonContain = require('zrender/lib/contain/polygon').contain;
@@ -41839,7 +46729,7 @@ require('zrender/lib/vml/vml');
     module.exports = selector;
 
 
-},{"zrender/lib/contain/polygon":357,"zrender/lib/core/BoundingRect":363}],159:[function(require,module,exports){
+},{"zrender/lib/contain/polygon":368,"zrender/lib/core/BoundingRect":374}],170:[function(require,module,exports){
 /**
  * @file Brush visual coding.
  */
@@ -42164,7 +47054,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../echarts":297,"../../util/throttle":333,"../../visual/visualSolution":341,"../helper/brushHelper":184,"./selector":158,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/util":375}],160:[function(require,module,exports){
+},{"../../echarts":308,"../../util/throttle":344,"../../visual/visualSolution":352,"../helper/brushHelper":195,"./selector":169,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/util":386}],171:[function(require,module,exports){
 /**
  * DataZoom component entry
  */
@@ -42185,7 +47075,7 @@ require('zrender/lib/vml/vml');
     require('./dataZoom/dataZoomAction');
 
 
-},{"./dataZoom/DataZoomModel":162,"./dataZoom/DataZoomView":163,"./dataZoom/InsideZoomModel":164,"./dataZoom/InsideZoomView":165,"./dataZoom/SliderZoomModel":168,"./dataZoom/SliderZoomView":169,"./dataZoom/dataZoomAction":170,"./dataZoom/dataZoomProcessor":171,"./dataZoom/typeDefaulter":175}],161:[function(require,module,exports){
+},{"./dataZoom/DataZoomModel":173,"./dataZoom/DataZoomView":174,"./dataZoom/InsideZoomModel":175,"./dataZoom/InsideZoomView":176,"./dataZoom/SliderZoomModel":179,"./dataZoom/SliderZoomView":180,"./dataZoom/dataZoomAction":181,"./dataZoom/dataZoomProcessor":182,"./dataZoom/typeDefaulter":186}],172:[function(require,module,exports){
 /**
  * @file Axis operator
  */
@@ -42552,7 +47442,7 @@ require('zrender/lib/vml/vml');
     module.exports = AxisProxy;
 
 
-},{"../../util/number":331,"./helper":172,"zrender/lib/core/util":375}],162:[function(require,module,exports){
+},{"../../util/number":342,"./helper":183,"zrender/lib/core/util":386}],173:[function(require,module,exports){
 /**
  * @file Data zoom model
  */
@@ -43040,7 +47930,7 @@ require('zrender/lib/vml/vml');
     module.exports = DataZoomModel;
 
 
-},{"../../echarts":297,"../../util/model":330,"./AxisProxy":161,"./helper":172,"zrender/lib/core/env":369,"zrender/lib/core/util":375}],163:[function(require,module,exports){
+},{"../../echarts":308,"../../util/model":341,"./AxisProxy":172,"./helper":183,"zrender/lib/core/env":380,"zrender/lib/core/util":386}],174:[function(require,module,exports){
 
 
     var ComponentView = require('../../view/Component');
@@ -43113,7 +48003,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../view/Component":335}],164:[function(require,module,exports){
+},{"../../view/Component":346}],175:[function(require,module,exports){
 /**
  * @file Data zoom model
  */
@@ -43132,7 +48022,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"./DataZoomModel":162}],165:[function(require,module,exports){
+},{"./DataZoomModel":173}],176:[function(require,module,exports){
 
 
     var DataZoomView = require('./DataZoomView');
@@ -43364,7 +48254,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = InsideZoomView;
 
-},{"../helper/sliderMove":188,"./DataZoomView":163,"./roams":174,"zrender/lib/core/util":375}],166:[function(require,module,exports){
+},{"../helper/sliderMove":199,"./DataZoomView":174,"./roams":185,"zrender/lib/core/util":386}],177:[function(require,module,exports){
 /**
  * @file Data zoom model
  */
@@ -43379,7 +48269,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"./DataZoomModel":162}],167:[function(require,module,exports){
+},{"./DataZoomModel":173}],178:[function(require,module,exports){
 
 
     module.exports = require('./DataZoomView').extend({
@@ -43389,7 +48279,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"./DataZoomView":163}],168:[function(require,module,exports){
+},{"./DataZoomView":174}],179:[function(require,module,exports){
 /**
  * @file Data zoom model
  */
@@ -43464,7 +48354,7 @@ require('zrender/lib/vml/vml');
     module.exports = SliderZoomModel;
 
 
-},{"./DataZoomModel":162}],169:[function(require,module,exports){
+},{"./DataZoomModel":173}],180:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -44220,7 +49110,7 @@ require('zrender/lib/vml/vml');
     module.exports = SliderZoomView;
 
 
-},{"../../util/graphic":328,"../../util/layout":329,"../../util/number":331,"../../util/throttle":333,"../helper/sliderMove":188,"./DataZoomView":163,"zrender/lib/core/util":375}],170:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/layout":340,"../../util/number":342,"../../util/throttle":344,"../helper/sliderMove":199,"./DataZoomView":174,"zrender/lib/core/util":386}],181:[function(require,module,exports){
 /**
  * @file Data zoom action
  */
@@ -44264,7 +49154,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../echarts":297,"./helper":172,"zrender/lib/core/util":375}],171:[function(require,module,exports){
+},{"../../echarts":308,"./helper":183,"zrender/lib/core/util":386}],182:[function(require,module,exports){
 /**
  * @file Data zoom processor
  */
@@ -44323,7 +49213,7 @@ require('zrender/lib/vml/vml');
 
 
 
-},{"../../echarts":297}],172:[function(require,module,exports){
+},{"../../echarts":308}],183:[function(require,module,exports){
 
     var formatUtil = require('../../util/format');
     var zrUtil = require('zrender/lib/core/util');
@@ -44457,7 +49347,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = helper;
 
-},{"../../util/format":327,"zrender/lib/core/util":375}],173:[function(require,module,exports){
+},{"../../util/format":338,"zrender/lib/core/util":386}],184:[function(require,module,exports){
 /**
  * @file History manager.
  */
@@ -44567,7 +49457,7 @@ require('zrender/lib/vml/vml');
     module.exports = history;
 
 
-},{"zrender/lib/core/util":375}],174:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],185:[function(require,module,exports){
 /**
  * @file Roam controller manager.
  */
@@ -44758,7 +49648,7 @@ require('zrender/lib/vml/vml');
     module.exports = roams;
 
 
-},{"../../component/helper/RoamController":183,"../../util/throttle":333,"zrender/lib/core/util":375}],175:[function(require,module,exports){
+},{"../../component/helper/RoamController":194,"../../util/throttle":344,"zrender/lib/core/util":386}],186:[function(require,module,exports){
 
 
     require('../../model/Component').registerSubTypeDefaulter('dataZoom', function (option) {
@@ -44767,7 +49657,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../model/Component":301}],176:[function(require,module,exports){
+},{"../../model/Component":312}],187:[function(require,module,exports){
 /**
  * DataZoom component entry
  */
@@ -44785,7 +49675,7 @@ require('zrender/lib/vml/vml');
     require('./dataZoom/dataZoomAction');
 
 
-},{"./dataZoom/DataZoomModel":162,"./dataZoom/DataZoomView":163,"./dataZoom/SelectZoomModel":166,"./dataZoom/SelectZoomView":167,"./dataZoom/dataZoomAction":170,"./dataZoom/dataZoomProcessor":171,"./dataZoom/typeDefaulter":175}],177:[function(require,module,exports){
+},{"./dataZoom/DataZoomModel":173,"./dataZoom/DataZoomView":174,"./dataZoom/SelectZoomModel":177,"./dataZoom/SelectZoomView":178,"./dataZoom/dataZoomAction":181,"./dataZoom/dataZoomProcessor":182,"./dataZoom/typeDefaulter":186}],188:[function(require,module,exports){
 
 
     require('../coord/geo/GeoModel');
@@ -44835,7 +49725,7 @@ require('zrender/lib/vml/vml');
         event: 'geounselected'
     });
 
-},{"../action/geoRoam":24,"../coord/geo/GeoModel":265,"../coord/geo/geoCreator":270,"../echarts":297,"./geo/GeoView":178,"zrender/lib/core/util":375}],178:[function(require,module,exports){
+},{"../action/geoRoam":35,"../coord/geo/GeoModel":276,"../coord/geo/geoCreator":281,"../echarts":308,"./geo/GeoView":189,"zrender/lib/core/util":386}],189:[function(require,module,exports){
 'use strict';
 
 
@@ -44877,7 +49767,7 @@ require('zrender/lib/vml/vml');
 
     });
 
-},{"../../echarts":297,"../helper/MapDraw":182}],179:[function(require,module,exports){
+},{"../../echarts":308,"../helper/MapDraw":193}],190:[function(require,module,exports){
 
 
     var echarts = require('../echarts');
@@ -45358,7 +50248,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../echarts":297,"../util/graphic":328,"../util/layout":329,"../util/model":330,"zrender/lib/core/util":375}],180:[function(require,module,exports){
+},{"../echarts":308,"../util/graphic":339,"../util/layout":340,"../util/model":341,"zrender/lib/core/util":386}],191:[function(require,module,exports){
 'use strict';
 
 
@@ -45398,7 +50288,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../coord/cartesian/Grid":261,"../echarts":297,"../util/graphic":328,"./axis":145,"zrender/lib/core/util":375}],181:[function(require,module,exports){
+},{"../coord/cartesian/Grid":272,"../echarts":308,"../util/graphic":339,"./axis":156,"zrender/lib/core/util":386}],192:[function(require,module,exports){
 /**
  * Box selection tool.
  *
@@ -46401,7 +51291,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = BrushController;
 
-},{"../../data/DataDiffer":291,"../../util/graphic":328,"./interactionMutex":185,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/util":375,"zrender/lib/mixin/Eventful":404}],182:[function(require,module,exports){
+},{"../../data/DataDiffer":302,"../../util/graphic":339,"./interactionMutex":196,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/util":386,"zrender/lib/mixin/Eventful":415}],193:[function(require,module,exports){
 /**
  * @module echarts/component/helper/MapDraw
  */
@@ -46737,7 +51627,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = MapDraw;
 
-},{"../../util/graphic":328,"./RoamController":183,"zrender/lib/core/util":375}],183:[function(require,module,exports){
+},{"../../util/graphic":339,"./RoamController":194,"zrender/lib/core/util":386}],194:[function(require,module,exports){
 /**
  * @module echarts/component/helper/RoamController
  */
@@ -46967,7 +51857,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = RoamController;
 
-},{"./interactionMutex":185,"zrender/lib/core/event":370,"zrender/lib/core/util":375,"zrender/lib/mixin/Eventful":404}],184:[function(require,module,exports){
+},{"./interactionMutex":196,"zrender/lib/core/event":381,"zrender/lib/core/util":386,"zrender/lib/mixin/Eventful":415}],195:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -47197,7 +52087,7 @@ require('zrender/lib/vml/vml');
     module.exports = helper;
 
 
-},{"../../util/graphic":328,"zrender/lib/core/util":375}],185:[function(require,module,exports){
+},{"../../util/graphic":339,"zrender/lib/core/util":386}],196:[function(require,module,exports){
 
 
     var ATTR = '\0_ec_interaction_mutex';
@@ -47241,7 +52131,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = interactionMutex;
 
-},{"../../echarts":297}],186:[function(require,module,exports){
+},{"../../echarts":308}],197:[function(require,module,exports){
 
     // List layout
     var layout = require('../../util/layout');
@@ -47307,7 +52197,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{"../../util/format":327,"../../util/graphic":328,"../../util/layout":329}],187:[function(require,module,exports){
+},{"../../util/format":338,"../../util/graphic":339,"../../util/layout":340}],198:[function(require,module,exports){
 /**
  * Data selectable mixin for chart series.
  * To eanble data select, option of series must have `selectedMode`.
@@ -47373,7 +52263,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{"zrender/lib/core/util":375}],188:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],199:[function(require,module,exports){
 
 
     /**
@@ -47428,7 +52318,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{}],189:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 /**
  * Legend component entry file8
  */
@@ -47442,7 +52332,7 @@ require('zrender/lib/vml/vml');
     // Series Filter
     echarts.registerProcessor(require('./legend/legendFilter'));
 
-},{"../echarts":297,"./legend/LegendModel":190,"./legend/LegendView":191,"./legend/legendAction":192,"./legend/legendFilter":193}],190:[function(require,module,exports){
+},{"../echarts":308,"./legend/LegendModel":201,"./legend/LegendView":202,"./legend/legendAction":203,"./legend/legendFilter":204}],201:[function(require,module,exports){
 'use strict';
 
 
@@ -47635,7 +52525,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = LegendModel;
 
-},{"../../echarts":297,"../../model/Model":303,"zrender/lib/core/util":375}],191:[function(require,module,exports){
+},{"../../echarts":308,"../../model/Model":314,"zrender/lib/core/util":386}],202:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -47901,7 +52791,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../echarts":297,"../../util/graphic":328,"../../util/symbol":332,"../helper/listComponent":186,"zrender/lib/core/util":375}],192:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"../../util/symbol":343,"../helper/listComponent":197,"zrender/lib/core/util":386}],203:[function(require,module,exports){
 /**
  * @file Legend action
  */
@@ -47984,7 +52874,7 @@ require('zrender/lib/vml/vml');
         zrUtil.curry(legendSelectActionHandler, 'unSelect')
     );
 
-},{"../../echarts":297,"zrender/lib/core/util":375}],193:[function(require,module,exports){
+},{"../../echarts":308,"zrender/lib/core/util":386}],204:[function(require,module,exports){
 
    module.exports = function (ecModel) {
         var legendModels = ecModel.findComponents({
@@ -48004,7 +52894,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{}],194:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 
 
     require('./marker/MarkAreaModel');
@@ -48015,7 +52905,7 @@ require('zrender/lib/vml/vml');
         opt.markArea = opt.markArea || {};
     });
 
-},{"../echarts":297,"./marker/MarkAreaModel":197,"./marker/MarkAreaView":198}],195:[function(require,module,exports){
+},{"../echarts":308,"./marker/MarkAreaModel":208,"./marker/MarkAreaView":209}],206:[function(require,module,exports){
 
 
     require('./marker/MarkLineModel');
@@ -48026,7 +52916,7 @@ require('zrender/lib/vml/vml');
         opt.markLine = opt.markLine || {};
     });
 
-},{"../echarts":297,"./marker/MarkLineModel":199,"./marker/MarkLineView":200}],196:[function(require,module,exports){
+},{"../echarts":308,"./marker/MarkLineModel":210,"./marker/MarkLineView":211}],207:[function(require,module,exports){
 // HINT Markpoint can't be used too much
 
 
@@ -48038,7 +52928,7 @@ require('zrender/lib/vml/vml');
         opt.markPoint = opt.markPoint || {};
     });
 
-},{"../echarts":297,"./marker/MarkPointModel":201,"./marker/MarkPointView":202}],197:[function(require,module,exports){
+},{"../echarts":308,"./marker/MarkPointModel":212,"./marker/MarkPointView":213}],208:[function(require,module,exports){
 
 
     module.exports = require('./MarkerModel').extend({
@@ -48075,7 +52965,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"./MarkerModel":203}],198:[function(require,module,exports){
+},{"./MarkerModel":214}],209:[function(require,module,exports){
 // TODO Better on polar
 
 
@@ -48393,7 +53283,7 @@ require('zrender/lib/vml/vml');
         return areaData;
     }
 
-},{"../../data/List":293,"../../util/graphic":328,"../../util/number":331,"./MarkerView":204,"./markerHelper":205,"zrender/lib/core/util":375,"zrender/lib/tool/color":406}],199:[function(require,module,exports){
+},{"../../data/List":304,"../../util/graphic":339,"../../util/number":342,"./MarkerView":215,"./markerHelper":216,"zrender/lib/core/util":386,"zrender/lib/tool/color":417}],210:[function(require,module,exports){
 
 
     module.exports = require('./MarkerModel').extend({
@@ -48434,7 +53324,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"./MarkerModel":203}],200:[function(require,module,exports){
+},{"./MarkerModel":214}],211:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -48790,7 +53680,7 @@ require('zrender/lib/vml/vml');
         };
     }
 
-},{"../../chart/helper/LineDraw":82,"../../data/List":293,"../../util/number":331,"./MarkerView":204,"./markerHelper":205,"zrender/lib/core/util":375}],201:[function(require,module,exports){
+},{"../../chart/helper/LineDraw":93,"../../data/List":304,"../../util/number":342,"./MarkerView":215,"./markerHelper":216,"zrender/lib/core/util":386}],212:[function(require,module,exports){
 
 
     module.exports = require('./MarkerModel').extend({
@@ -48824,7 +53714,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"./MarkerModel":203}],202:[function(require,module,exports){
+},{"./MarkerModel":214}],213:[function(require,module,exports){
 
 
     var SymbolDraw = require('../../chart/helper/SymbolDraw');
@@ -48981,7 +53871,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../chart/helper/SymbolDraw":86,"../../data/List":293,"../../util/number":331,"./MarkerView":204,"./markerHelper":205,"zrender/lib/core/util":375}],203:[function(require,module,exports){
+},{"../../chart/helper/SymbolDraw":97,"../../data/List":304,"../../util/number":342,"./MarkerView":215,"./markerHelper":216,"zrender/lib/core/util":386}],214:[function(require,module,exports){
 
 
     var modelUtil = require('../../util/model');
@@ -49115,7 +54005,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = MarkerModel;
 
-},{"../../echarts":297,"../../util/format":327,"../../util/model":330,"zrender/lib/core/env":369,"zrender/lib/core/util":375}],204:[function(require,module,exports){
+},{"../../echarts":308,"../../util/format":338,"../../util/model":341,"zrender/lib/core/env":380,"zrender/lib/core/util":386}],215:[function(require,module,exports){
 
 
     module.exports = require('../../echarts').extendComponentView({
@@ -49155,7 +54045,7 @@ require('zrender/lib/vml/vml');
         renderSeries: function () {}
     });
 
-},{"../../echarts":297}],205:[function(require,module,exports){
+},{"../../echarts":308}],216:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -49355,7 +54245,7 @@ require('zrender/lib/vml/vml');
         numCalculate: numCalculate
     };
 
-},{"../../util/number":331,"zrender/lib/core/util":375}],206:[function(require,module,exports){
+},{"../../util/number":342,"zrender/lib/core/util":386}],217:[function(require,module,exports){
 
 
     require('../coord/parallel/parallelCreator');
@@ -49414,7 +54304,7 @@ require('zrender/lib/vml/vml');
     );
 
 
-},{"../coord/parallel/ParallelModel":275,"../coord/parallel/parallelCreator":276,"../coord/parallel/parallelPreprocessor":277,"../echarts":297,"./parallelAxis":207,"zrender/lib/core/util":375}],207:[function(require,module,exports){
+},{"../coord/parallel/ParallelModel":286,"../coord/parallel/parallelCreator":287,"../coord/parallel/parallelPreprocessor":288,"../echarts":308,"./parallelAxis":218,"zrender/lib/core/util":386}],218:[function(require,module,exports){
 
 
     require('../coord/parallel/parallelCreator');
@@ -49422,7 +54312,7 @@ require('zrender/lib/vml/vml');
     require('./axis/ParallelAxisView');
 
 
-},{"../coord/parallel/parallelCreator":276,"./axis/ParallelAxisView":149,"./axis/parallelAxisAction":152}],208:[function(require,module,exports){
+},{"../coord/parallel/parallelCreator":287,"./axis/ParallelAxisView":160,"./axis/parallelAxisAction":163}],219:[function(require,module,exports){
 'use strict';
 
 
@@ -49435,7 +54325,7 @@ require('zrender/lib/vml/vml');
         type: 'polar'
     });
 
-},{"../coord/polar/polarCreator":283,"../echarts":297,"./angleAxis":144,"./radiusAxis":211}],209:[function(require,module,exports){
+},{"../coord/polar/polarCreator":294,"../echarts":308,"./angleAxis":155,"./radiusAxis":222}],220:[function(require,module,exports){
 
 
     require('../coord/radar/Radar');
@@ -49443,7 +54333,7 @@ require('zrender/lib/vml/vml');
 
     require('./radar/RadarView');
 
-},{"../coord/radar/Radar":285,"../coord/radar/RadarModel":286,"./radar/RadarView":210}],210:[function(require,module,exports){
+},{"../coord/radar/Radar":296,"../coord/radar/RadarModel":297,"./radar/RadarView":221}],221:[function(require,module,exports){
 
 
     var AxisBuilder = require('../axis/AxisBuilder');
@@ -49619,14 +54509,14 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../echarts":297,"../../util/graphic":328,"../axis/AxisBuilder":147,"zrender/lib/core/util":375}],211:[function(require,module,exports){
+},{"../../echarts":308,"../../util/graphic":339,"../axis/AxisBuilder":158,"zrender/lib/core/util":386}],222:[function(require,module,exports){
 
 
     require('../coord/polar/polarCreator');
 
     require('./axis/RadiusAxisView');
 
-},{"../coord/polar/polarCreator":283,"./axis/RadiusAxisView":150}],212:[function(require,module,exports){
+},{"../coord/polar/polarCreator":294,"./axis/RadiusAxisView":161}],223:[function(require,module,exports){
 
 
     require('../coord/single/singleCreator');
@@ -49640,7 +54530,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../coord/single/AxisModel":287,"../coord/single/singleCreator":290,"../echarts":297,"./axis/SingleAxisView":151}],213:[function(require,module,exports){
+},{"../coord/single/AxisModel":298,"../coord/single/singleCreator":301,"../echarts":308,"./axis/SingleAxisView":162}],224:[function(require,module,exports){
 /**
  * DataZoom component entry
  */
@@ -49656,7 +54546,7 @@ require('zrender/lib/vml/vml');
     require('./timeline/SliderTimelineView');
 
 
-},{"../echarts":297,"./timeline/SliderTimelineModel":214,"./timeline/SliderTimelineView":215,"./timeline/preprocessor":219,"./timeline/timelineAction":220,"./timeline/typeDefaulter":221}],214:[function(require,module,exports){
+},{"../echarts":308,"./timeline/SliderTimelineModel":225,"./timeline/SliderTimelineView":226,"./timeline/preprocessor":230,"./timeline/timelineAction":231,"./timeline/typeDefaulter":232}],225:[function(require,module,exports){
 /**
  * @file Silder timeline model
  */
@@ -49768,7 +54658,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = SliderTimelineModel;
 
-},{"../../util/model":330,"./TimelineModel":217,"zrender/lib/core/util":375}],215:[function(require,module,exports){
+},{"../../util/model":341,"./TimelineModel":228,"zrender/lib/core/util":386}],226:[function(require,module,exports){
 /**
  * @file Silder timeline view
  */
@@ -50482,7 +55372,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../coord/axisHelper":254,"../../util/format":327,"../../util/graphic":328,"../../util/layout":329,"../../util/number":331,"../../util/symbol":332,"./TimelineAxis":216,"./TimelineView":218,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/matrix":373,"zrender/lib/core/util":375}],216:[function(require,module,exports){
+},{"../../coord/axisHelper":265,"../../util/format":338,"../../util/graphic":339,"../../util/layout":340,"../../util/number":342,"../../util/symbol":343,"./TimelineAxis":227,"./TimelineView":229,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/matrix":384,"zrender/lib/core/util":386}],227:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -50579,7 +55469,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = TimelineAxis;
 
-},{"../../coord/Axis":251,"../../coord/axisHelper":254,"zrender/lib/core/util":375}],217:[function(require,module,exports){
+},{"../../coord/Axis":262,"../../coord/axisHelper":265,"zrender/lib/core/util":386}],228:[function(require,module,exports){
 /**
  * @file Timeline model
  */
@@ -50777,7 +55667,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = TimelineModel;
 
-},{"../../data/List":293,"../../model/Component":301,"../../util/model":330,"zrender/lib/core/util":375}],218:[function(require,module,exports){
+},{"../../data/List":304,"../../model/Component":312,"../../util/model":341,"zrender/lib/core/util":386}],229:[function(require,module,exports){
 /**
  * @file Timeline view
  */
@@ -50793,7 +55683,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../view/Component":335}],219:[function(require,module,exports){
+},{"../../view/Component":346}],230:[function(require,module,exports){
 /**
  * @file Timeline preprocessor
  */
@@ -50880,7 +55770,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"zrender/lib/core/util":375}],220:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],231:[function(require,module,exports){
 /**
  * @file Timeilne action
  */
@@ -50926,7 +55816,7 @@ require('zrender/lib/vml/vml');
     );
 
 
-},{"../../echarts":297,"zrender/lib/core/util":375}],221:[function(require,module,exports){
+},{"../../echarts":308,"zrender/lib/core/util":386}],232:[function(require,module,exports){
 
 
     require('../../model/Component').registerSubTypeDefaulter('timeline', function () {
@@ -50935,7 +55825,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../model/Component":301}],222:[function(require,module,exports){
+},{"../../model/Component":312}],233:[function(require,module,exports){
 'use strict';
 
 
@@ -51145,7 +56035,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../echarts":297,"../util/graphic":328,"../util/layout":329}],223:[function(require,module,exports){
+},{"../echarts":308,"../util/graphic":339,"../util/layout":340}],234:[function(require,module,exports){
 
 
     require('./toolbox/ToolboxModel');
@@ -51157,7 +56047,7 @@ require('zrender/lib/vml/vml');
     require('./toolbox/feature/DataZoom');
     require('./toolbox/feature/Restore');
 
-},{"./toolbox/ToolboxModel":224,"./toolbox/ToolboxView":225,"./toolbox/feature/DataView":227,"./toolbox/feature/DataZoom":228,"./toolbox/feature/MagicType":229,"./toolbox/feature/Restore":230,"./toolbox/feature/SaveAsImage":231}],224:[function(require,module,exports){
+},{"./toolbox/ToolboxModel":235,"./toolbox/ToolboxView":236,"./toolbox/feature/DataView":238,"./toolbox/feature/DataZoom":239,"./toolbox/feature/MagicType":240,"./toolbox/feature/Restore":241,"./toolbox/feature/SaveAsImage":242}],235:[function(require,module,exports){
 
 
     var featureManager = require('./featureManager');
@@ -51229,7 +56119,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = ToolboxModel;
 
-},{"../../echarts":297,"./featureManager":232,"zrender/lib/core/util":375}],225:[function(require,module,exports){
+},{"../../echarts":308,"./featureManager":243,"zrender/lib/core/util":386}],236:[function(require,module,exports){
 
 
     var featureManager = require('./featureManager');
@@ -51479,7 +56369,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"../../data/DataDiffer":291,"../../echarts":297,"../../model/Model":303,"../../util/graphic":328,"../helper/listComponent":186,"./featureManager":232,"zrender/lib/contain/text":359,"zrender/lib/core/util":375}],226:[function(require,module,exports){
+},{"../../data/DataDiffer":302,"../../echarts":308,"../../model/Model":314,"../../util/graphic":339,"../helper/listComponent":197,"./featureManager":243,"zrender/lib/contain/text":370,"zrender/lib/core/util":386}],237:[function(require,module,exports){
 'use strict';
 
 
@@ -51600,7 +56490,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Brush;
 
-},{"../featureManager":232,"zrender/lib/core/util":375}],227:[function(require,module,exports){
+},{"../featureManager":243,"zrender/lib/core/util":386}],238:[function(require,module,exports){
 /**
  * @module echarts/component/toolbox/feature/DataView
  */
@@ -52079,7 +56969,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = DataView;
 
-},{"../../../echarts":297,"../featureManager":232,"zrender/lib/core/event":370,"zrender/lib/core/util":375}],228:[function(require,module,exports){
+},{"../../../echarts":308,"../featureManager":243,"zrender/lib/core/event":381,"zrender/lib/core/util":386}],239:[function(require,module,exports){
 'use strict';
 
 
@@ -52383,7 +57273,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = DataZoom;
 
-},{"../../../echarts":297,"../../dataZoom/history":173,"../../dataZoomSelect":176,"../../helper/BrushController":181,"../../helper/brushHelper":184,"../featureManager":232,"zrender/lib/core/util":375}],229:[function(require,module,exports){
+},{"../../../echarts":308,"../../dataZoom/history":184,"../../dataZoomSelect":187,"../../helper/BrushController":192,"../../helper/brushHelper":195,"../featureManager":243,"zrender/lib/core/util":386}],240:[function(require,module,exports){
 'use strict';
 
 
@@ -52559,7 +57449,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = MagicType;
 
-},{"../../../echarts":297,"../featureManager":232,"zrender/lib/core/util":375}],230:[function(require,module,exports){
+},{"../../../echarts":308,"../featureManager":243,"zrender/lib/core/util":386}],241:[function(require,module,exports){
 'use strict';
 
 
@@ -52599,7 +57489,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Restore;
 
-},{"../../../echarts":297,"../../dataZoom/history":173,"../featureManager":232}],231:[function(require,module,exports){
+},{"../../../echarts":308,"../../dataZoom/history":184,"../featureManager":243}],242:[function(require,module,exports){
 
 
     var env = require('zrender/lib/core/env');
@@ -52667,7 +57557,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = SaveAsImage;
 
-},{"../featureManager":232,"zrender/lib/core/env":369}],232:[function(require,module,exports){
+},{"../featureManager":243,"zrender/lib/core/env":380}],243:[function(require,module,exports){
 'use strict';
 
 
@@ -52683,7 +57573,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{}],233:[function(require,module,exports){
+},{}],244:[function(require,module,exports){
 // FIXME Better way to pack data in graphic element
 
 
@@ -52720,7 +57610,7 @@ require('zrender/lib/vml/vml');
         function () {}
     );
 
-},{"../echarts":297,"./tooltip/TooltipModel":235,"./tooltip/TooltipView":236}],234:[function(require,module,exports){
+},{"../echarts":308,"./tooltip/TooltipModel":246,"./tooltip/TooltipView":247}],245:[function(require,module,exports){
 /**
  * @module echarts/component/tooltip/TooltipContent
  */
@@ -52963,7 +57853,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = TooltipContent;
 
-},{"../../util/format":327,"zrender/lib/core/env":369,"zrender/lib/core/event":370,"zrender/lib/core/util":375,"zrender/lib/tool/color":406}],235:[function(require,module,exports){
+},{"../../util/format":338,"zrender/lib/core/env":380,"zrender/lib/core/event":381,"zrender/lib/core/util":386,"zrender/lib/tool/color":417}],246:[function(require,module,exports){
 
 
     require('../../echarts').extendComponentModel({
@@ -53071,7 +57961,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../echarts":297}],236:[function(require,module,exports){
+},{"../../echarts":308}],247:[function(require,module,exports){
 
 
     var TooltipContent = require('./TooltipContent');
@@ -54337,7 +59227,7 @@ require('zrender/lib/vml/vml');
         }
     });
 
-},{"../../echarts":297,"../../model/Model":303,"../../util/format":327,"../../util/graphic":328,"../../util/model":330,"../../util/number":331,"./TooltipContent":234,"zrender/lib/core/env":369,"zrender/lib/core/util":375}],237:[function(require,module,exports){
+},{"../../echarts":308,"../../model/Model":314,"../../util/format":338,"../../util/graphic":339,"../../util/model":341,"../../util/number":342,"./TooltipContent":245,"zrender/lib/core/env":380,"zrender/lib/core/util":386}],248:[function(require,module,exports){
 /**
  * visualMap component entry
  */
@@ -54347,7 +59237,7 @@ require('zrender/lib/vml/vml');
     require('./visualMapPiecewise');
 
 
-},{"./visualMapContinuous":249,"./visualMapPiecewise":250}],238:[function(require,module,exports){
+},{"./visualMapContinuous":260,"./visualMapPiecewise":261}],249:[function(require,module,exports){
 /**
  * @file Data zoom model
  */
@@ -54597,7 +59487,7 @@ require('zrender/lib/vml/vml');
     module.exports = ContinuousModel;
 
 
-},{"../../util/number":331,"./VisualMapModel":242,"zrender/lib/core/util":375}],239:[function(require,module,exports){
+},{"../../util/number":342,"./VisualMapModel":253,"zrender/lib/core/util":386}],250:[function(require,module,exports){
 
 
     var VisualMapView = require('./VisualMapView');
@@ -55426,7 +60316,7 @@ require('zrender/lib/vml/vml');
     module.exports = ContinuousView;
 
 
-},{"../../util/graphic":328,"../../util/model":330,"../../util/number":331,"../helper/sliderMove":188,"./VisualMapView":243,"./helper":244,"zrender/lib/core/util":375,"zrender/lib/graphic/LinearGradient":382}],240:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/model":341,"../../util/number":342,"../helper/sliderMove":199,"./VisualMapView":254,"./helper":255,"zrender/lib/core/util":386,"zrender/lib/graphic/LinearGradient":393}],251:[function(require,module,exports){
 
 
     var VisualMapModel = require('./VisualMapModel');
@@ -55955,7 +60845,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = PiecewiseModel;
 
-},{"../../util/number":331,"../../visual/VisualMapping":336,"../../visual/visualDefault":340,"./VisualMapModel":242,"zrender/lib/core/util":375}],241:[function(require,module,exports){
+},{"../../util/number":342,"../../visual/VisualMapping":347,"../../visual/visualDefault":351,"./VisualMapModel":253,"zrender/lib/core/util":386}],252:[function(require,module,exports){
 
 
     var VisualMapView = require('./VisualMapView');
@@ -56179,7 +61069,7 @@ require('zrender/lib/vml/vml');
     module.exports = PiecewiseVisualMapView;
 
 
-},{"../../util/graphic":328,"../../util/layout":329,"../../util/symbol":332,"./VisualMapView":243,"./helper":244,"zrender/lib/core/util":375}],242:[function(require,module,exports){
+},{"../../util/graphic":339,"../../util/layout":340,"../../util/symbol":343,"./VisualMapView":254,"./helper":255,"zrender/lib/core/util":386}],253:[function(require,module,exports){
 /**
  * @file Controller visual map model
  */
@@ -56702,7 +61592,7 @@ require('zrender/lib/vml/vml');
     module.exports = VisualMapModel;
 
 
-},{"../../echarts":297,"../../util/model":330,"../../util/number":331,"../../visual/VisualMapping":336,"../../visual/visualDefault":340,"../../visual/visualSolution":341,"zrender/lib/core/env":369,"zrender/lib/core/util":375}],243:[function(require,module,exports){
+},{"../../echarts":308,"../../util/model":341,"../../util/number":342,"../../visual/VisualMapping":347,"../../visual/visualDefault":351,"../../visual/visualSolution":352,"zrender/lib/core/env":380,"zrender/lib/core/util":386}],254:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -56858,7 +61748,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../echarts":297,"../../util/format":327,"../../util/graphic":328,"../../util/layout":329,"../../visual/VisualMapping":336,"zrender/lib/core/util":375}],244:[function(require,module,exports){
+},{"../../echarts":308,"../../util/format":338,"../../util/graphic":339,"../../util/layout":340,"../../visual/VisualMapping":347,"zrender/lib/core/util":386}],255:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -56926,7 +61816,7 @@ require('zrender/lib/vml/vml');
     module.exports = helper;
 
 
-},{"../../util/layout":329,"zrender/lib/core/util":375}],245:[function(require,module,exports){
+},{"../../util/layout":340,"zrender/lib/core/util":386}],256:[function(require,module,exports){
 /**
  * @file VisualMap preprocessor
  */
@@ -56974,7 +61864,7 @@ require('zrender/lib/vml/vml');
     }
 
 
-},{"zrender/lib/core/util":375}],246:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],257:[function(require,module,exports){
 
 
     require('../../model/Component').registerSubTypeDefaulter('visualMap', function (option) {
@@ -56994,7 +61884,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../model/Component":301}],247:[function(require,module,exports){
+},{"../../model/Component":312}],258:[function(require,module,exports){
 /**
  * @file Data range visual coding.
  */
@@ -57080,7 +61970,7 @@ require('zrender/lib/vml/vml');
 
 
 
-},{"../../echarts":297,"../../visual/VisualMapping":336,"../../visual/visualSolution":341,"zrender/lib/core/util":375}],248:[function(require,module,exports){
+},{"../../echarts":308,"../../visual/VisualMapping":347,"../../visual/visualSolution":352,"zrender/lib/core/util":386}],259:[function(require,module,exports){
 /**
  * @file Data range action
  */
@@ -57104,7 +61994,7 @@ require('zrender/lib/vml/vml');
     });
 
 
-},{"../../echarts":297}],249:[function(require,module,exports){
+},{"../../echarts":308}],260:[function(require,module,exports){
 /**
  * DataZoom component entry
  */
@@ -57121,7 +62011,7 @@ require('zrender/lib/vml/vml');
     require('./visualMap/visualMapAction');
 
 
-},{"../echarts":297,"./visualMap/ContinuousModel":238,"./visualMap/ContinuousView":239,"./visualMap/preprocessor":245,"./visualMap/typeDefaulter":246,"./visualMap/visualEncoding":247,"./visualMap/visualMapAction":248}],250:[function(require,module,exports){
+},{"../echarts":308,"./visualMap/ContinuousModel":249,"./visualMap/ContinuousView":250,"./visualMap/preprocessor":256,"./visualMap/typeDefaulter":257,"./visualMap/visualEncoding":258,"./visualMap/visualMapAction":259}],261:[function(require,module,exports){
 /**
  * DataZoom component entry
  */
@@ -57138,7 +62028,7 @@ require('zrender/lib/vml/vml');
     require('./visualMap/visualMapAction');
 
 
-},{"../echarts":297,"./visualMap/PiecewiseModel":240,"./visualMap/PiecewiseView":241,"./visualMap/preprocessor":245,"./visualMap/typeDefaulter":246,"./visualMap/visualEncoding":247,"./visualMap/visualMapAction":248}],251:[function(require,module,exports){
+},{"../echarts":308,"./visualMap/PiecewiseModel":251,"./visualMap/PiecewiseView":252,"./visualMap/preprocessor":256,"./visualMap/typeDefaulter":257,"./visualMap/visualEncoding":258,"./visualMap/visualMapAction":259}],262:[function(require,module,exports){
 
 
     var numberUtil = require('../util/number');
@@ -57376,7 +62266,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Axis;
 
-},{"../util/number":331,"zrender/lib/core/util":375}],252:[function(require,module,exports){
+},{"../util/number":342,"zrender/lib/core/util":386}],263:[function(require,module,exports){
 /**
  * Simple view coordinate system
  * Mapping given x, y to transformd view x, y
@@ -57673,7 +62563,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = View;
 
-},{"zrender/lib/core/BoundingRect":363,"zrender/lib/core/matrix":373,"zrender/lib/core/util":375,"zrender/lib/core/vector":376,"zrender/lib/mixin/Transformable":405}],253:[function(require,module,exports){
+},{"zrender/lib/core/BoundingRect":374,"zrender/lib/core/matrix":384,"zrender/lib/core/util":386,"zrender/lib/core/vector":387,"zrender/lib/mixin/Transformable":416}],264:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -57827,7 +62717,7 @@ require('zrender/lib/vml/vml');
         logAxis: logAxis
     };
 
-},{"zrender/lib/core/util":375}],254:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],265:[function(require,module,exports){
 
 
     var OrdinalScale = require('../scale/Ordinal');
@@ -58073,7 +62963,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = axisHelper;
 
-},{"../scale/Interval":318,"../scale/Log":319,"../scale/Ordinal":320,"../scale/Scale":321,"../scale/Time":322,"../util/number":331,"zrender/lib/contain/text":359,"zrender/lib/core/util":375}],255:[function(require,module,exports){
+},{"../scale/Interval":329,"../scale/Log":330,"../scale/Ordinal":331,"../scale/Scale":332,"../scale/Time":333,"../util/number":342,"zrender/lib/contain/text":370,"zrender/lib/core/util":386}],266:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -58172,7 +63062,7 @@ require('zrender/lib/vml/vml');
         }
     };
 
-},{"./axisHelper":254,"zrender/lib/core/util":375}],256:[function(require,module,exports){
+},{"./axisHelper":265,"zrender/lib/core/util":386}],267:[function(require,module,exports){
 
 
     var axisDefault = require('./axisDefault');
@@ -58231,7 +63121,7 @@ require('zrender/lib/vml/vml');
         );
     };
 
-},{"../model/Component":301,"../util/layout":329,"./axisDefault":253,"zrender/lib/core/util":375}],257:[function(require,module,exports){
+},{"../model/Component":312,"../util/layout":340,"./axisDefault":264,"zrender/lib/core/util":386}],268:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -58349,7 +63239,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Axis2D;
 
-},{"../Axis":251,"./axisLabelInterval":263,"zrender/lib/core/util":375}],258:[function(require,module,exports){
+},{"../Axis":262,"./axisLabelInterval":274,"zrender/lib/core/util":386}],269:[function(require,module,exports){
 'use strict';
 
 
@@ -58424,7 +63314,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = AxisModel;
 
-},{"../../model/Component":301,"../axisModelCommonMixin":255,"../axisModelCreator":256,"zrender/lib/core/util":375}],259:[function(require,module,exports){
+},{"../../model/Component":312,"../axisModelCommonMixin":266,"../axisModelCreator":267,"zrender/lib/core/util":386}],270:[function(require,module,exports){
 'use strict';
 /**
  * Cartesian coordinate system
@@ -58538,7 +63428,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Cartesian;
 
-},{"zrender/lib/core/util":375}],260:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],271:[function(require,module,exports){
 'use strict';
 
 
@@ -58650,7 +63540,7 @@ require('zrender/lib/vml/vml');
 
     module.exports = Cartesian2D;
 
-},{"./Cartesian":259,"zrender/lib/core/util":375}],261:[function(require,module,exports){
+},{"./Cartesian":270,"zrender/lib/core/util":386}],272:[function(require,module,exports){
 /**
  * Grid is a region which contains at most 4 cartesian systems
  *
@@ -59213,7 +64103,7 @@ var factory = exports;
 
     module.exports = Grid;
 
-},{"../../CoordinateSystem":21,"../../coord/axisHelper":254,"../../util/layout":329,"./Axis2D":257,"./Cartesian2D":260,"./GridModel":262,"zrender/lib/core/util":375}],262:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"../../coord/axisHelper":265,"../../util/layout":340,"./Axis2D":268,"./Cartesian2D":271,"./GridModel":273,"zrender/lib/core/util":386}],273:[function(require,module,exports){
 'use strict';
 // Grid 是在有直角坐标系的时候必须要存在的
 // 所以这里也要被 Cartesian2D 依赖
@@ -59253,7 +64143,7 @@ var factory = exports;
         }
     });
 
-},{"../../model/Component":301,"./AxisModel":258}],263:[function(require,module,exports){
+},{"../../model/Component":312,"./AxisModel":269}],274:[function(require,module,exports){
 'use strict';
 /**
  * Helper function for axisLabelInterval calculation
@@ -59280,7 +64170,7 @@ var factory = exports;
         );
     };
 
-},{"../axisHelper":254,"zrender/lib/core/util":375}],264:[function(require,module,exports){
+},{"../axisHelper":265,"zrender/lib/core/util":386}],275:[function(require,module,exports){
 
 
     var parseGeoJson = require('./parseGeoJson');
@@ -59542,7 +64432,7 @@ var factory = exports;
 
     module.exports = Geo;
 
-},{"../View":252,"./fix/geoCoord":267,"./fix/nanhai":268,"./fix/textCoord":269,"./parseGeoJson":271,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/util":375}],265:[function(require,module,exports){
+},{"../View":263,"./fix/geoCoord":278,"./fix/nanhai":279,"./fix/textCoord":280,"./parseGeoJson":282,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/util":386}],276:[function(require,module,exports){
 'use strict';
 
     var modelUtil = require('../../util/model');
@@ -59706,7 +64596,7 @@ var factory = exports;
 
     module.exports = GeoModel;
 
-},{"../../component/helper/selectableMixin":187,"../../model/Component":301,"../../model/Model":303,"../../util/model":330,"./geoCreator":270,"zrender/lib/core/util":375}],266:[function(require,module,exports){
+},{"../../component/helper/selectableMixin":198,"../../model/Component":312,"../../model/Model":314,"../../util/model":341,"./geoCreator":281,"zrender/lib/core/util":386}],277:[function(require,module,exports){
 /**
  * @module echarts/coord/geo/Region
  */
@@ -59834,7 +64724,7 @@ var factory = exports;
 
     module.exports = Region;
 
-},{"zrender/lib/contain/polygon":357,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/bbox":367,"zrender/lib/core/vector":376}],267:[function(require,module,exports){
+},{"zrender/lib/contain/polygon":368,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/bbox":378,"zrender/lib/core/vector":387}],278:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -59855,7 +64745,7 @@ var factory = exports;
         });
     };
 
-},{"zrender/lib/core/util":375}],268:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],279:[function(require,module,exports){
 // Fix for 南海诸岛
 
 
@@ -59896,7 +64786,7 @@ var factory = exports;
         }
     };
 
-},{"../Region":266}],269:[function(require,module,exports){
+},{"../Region":277}],280:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -59922,7 +64812,7 @@ var factory = exports;
         });
     };
 
-},{"zrender/lib/core/util":375}],270:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],281:[function(require,module,exports){
 
 
     var Geo = require('./Geo');
@@ -60201,7 +65091,7 @@ var factory = exports;
 
     module.exports = geoCreator;
 
-},{"../../echarts":297,"../../util/layout":329,"../../util/number":331,"./Geo":264,"zrender/lib/core/util":375}],271:[function(require,module,exports){
+},{"../../echarts":308,"../../util/layout":340,"../../util/number":342,"./Geo":275,"zrender/lib/core/util":386}],282:[function(require,module,exports){
 /**
  * Parse and decode geo json
  * @module echarts/coord/geo/parseGeoJson
@@ -60316,7 +65206,7 @@ var factory = exports;
         });
     };
 
-},{"./Region":266,"zrender/lib/core/util":375}],272:[function(require,module,exports){
+},{"./Region":277,"zrender/lib/core/util":386}],283:[function(require,module,exports){
 
 
     var ComponentModel = require('../../model/Component');
@@ -60439,7 +65329,7 @@ var factory = exports;
 
     module.exports = AxisModel;
 
-},{"../../model/Component":301,"../../model/mixin/makeStyleMapper":312,"../../util/number":331,"../axisModelCommonMixin":255,"../axisModelCreator":256,"zrender/lib/core/util":375}],273:[function(require,module,exports){
+},{"../../model/Component":312,"../../model/mixin/makeStyleMapper":323,"../../util/number":342,"../axisModelCommonMixin":266,"../axisModelCreator":267,"zrender/lib/core/util":386}],284:[function(require,module,exports){
 /**
  * Parallel Coordinates
  * <https://en.wikipedia.org/wiki/Parallel_coordinates>
@@ -60832,7 +65722,7 @@ var factory = exports;
 
     module.exports = Parallel;
 
-},{"../../coord/axisHelper":254,"../../util/graphic":328,"../../util/layout":329,"./ParallelAxis":274,"zrender/lib/core/matrix":373,"zrender/lib/core/util":375}],274:[function(require,module,exports){
+},{"../../coord/axisHelper":265,"../../util/graphic":339,"../../util/layout":340,"./ParallelAxis":285,"zrender/lib/core/matrix":384,"zrender/lib/core/util":386}],285:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -60883,7 +65773,7 @@ var factory = exports;
 
     module.exports = ParallelAxis;
 
-},{"../Axis":251,"zrender/lib/core/util":375}],275:[function(require,module,exports){
+},{"../Axis":262,"zrender/lib/core/util":386}],286:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -61005,7 +65895,7 @@ var factory = exports;
     });
 
 
-},{"../../model/Component":301,"./AxisModel":272,"zrender/lib/core/util":375}],276:[function(require,module,exports){
+},{"../../model/Component":312,"./AxisModel":283,"zrender/lib/core/util":386}],287:[function(require,module,exports){
 /**
  * Parallel coordinate system creater.
  */
@@ -61046,7 +65936,7 @@ var factory = exports;
     require('../../CoordinateSystem').register('parallel', {create: create});
 
 
-},{"../../CoordinateSystem":21,"./Parallel":273}],277:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"./Parallel":284}],288:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -61101,7 +65991,7 @@ var factory = exports;
     }
 
 
-},{"../../util/model":330,"zrender/lib/core/util":375}],278:[function(require,module,exports){
+},{"../../util/model":341,"zrender/lib/core/util":386}],289:[function(require,module,exports){
 'use strict';
 
 
@@ -61138,7 +66028,7 @@ var factory = exports;
 
     module.exports = AngleAxis;
 
-},{"../Axis":251,"zrender/lib/core/util":375}],279:[function(require,module,exports){
+},{"../Axis":262,"zrender/lib/core/util":386}],290:[function(require,module,exports){
 'use strict';
 
 
@@ -61202,7 +66092,7 @@ var factory = exports;
     axisModelCreator('radius', PolarAxisModel, getAxisType, polarAxisDefaultExtendedOption.radius);
 
 
-},{"../../model/Component":301,"../axisModelCommonMixin":255,"../axisModelCreator":256,"zrender/lib/core/util":375}],280:[function(require,module,exports){
+},{"../../model/Component":312,"../axisModelCommonMixin":266,"../axisModelCreator":267,"zrender/lib/core/util":386}],291:[function(require,module,exports){
 'use strict';
 /**
  * @module echarts/coord/polar/Polar
@@ -61431,7 +66321,7 @@ var factory = exports;
 
     module.exports = Polar;
 
-},{"./AngleAxis":278,"./RadiusAxis":282}],281:[function(require,module,exports){
+},{"./AngleAxis":289,"./RadiusAxis":293}],292:[function(require,module,exports){
 'use strict';
 
 
@@ -61476,7 +66366,7 @@ var factory = exports;
         }
     });
 
-},{"../../echarts":297,"./AxisModel":279}],282:[function(require,module,exports){
+},{"../../echarts":308,"./AxisModel":290}],293:[function(require,module,exports){
 'use strict';
 
 
@@ -61511,7 +66401,7 @@ var factory = exports;
 
     module.exports = RadiusAxis;
 
-},{"../Axis":251,"zrender/lib/core/util":375}],283:[function(require,module,exports){
+},{"../Axis":262,"zrender/lib/core/util":386}],294:[function(require,module,exports){
 // TODO Axis scale
 
 
@@ -61657,7 +66547,7 @@ var factory = exports;
 
     require('../../CoordinateSystem').register('polar', polarCreator);
 
-},{"../../CoordinateSystem":21,"../../coord/axisHelper":254,"../../util/number":331,"./Polar":280,"./PolarModel":281,"zrender/lib/core/util":375}],284:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"../../coord/axisHelper":265,"../../util/number":342,"./Polar":291,"./PolarModel":292,"zrender/lib/core/util":386}],295:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -61693,7 +66583,7 @@ var factory = exports;
 
     module.exports = IndicatorAxis;
 
-},{"../Axis":251,"zrender/lib/core/util":375}],285:[function(require,module,exports){
+},{"../Axis":262,"zrender/lib/core/util":386}],296:[function(require,module,exports){
 // TODO clockwise
 
 
@@ -61928,7 +66818,7 @@ var factory = exports;
     require('../../CoordinateSystem').register('radar', Radar);
     module.exports = Radar;
 
-},{"../../CoordinateSystem":21,"../../scale/Interval":318,"../../util/number":331,"../axisHelper":254,"./IndicatorAxis":284,"zrender/lib/core/util":375}],286:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"../../scale/Interval":329,"../../util/number":342,"../axisHelper":265,"./IndicatorAxis":295,"zrender/lib/core/util":386}],297:[function(require,module,exports){
 
 
 
@@ -62064,7 +66954,7 @@ var factory = exports;
 
     module.exports = RadarModel;
 
-},{"../../echarts":297,"../../model/Model":303,"../axisDefault":253,"../axisModelCommonMixin":255,"zrender/lib/core/util":375}],287:[function(require,module,exports){
+},{"../../echarts":308,"../../model/Model":314,"../axisDefault":264,"../axisModelCommonMixin":266,"zrender/lib/core/util":386}],298:[function(require,module,exports){
 
 
     var ComponentModel = require('../../model/Component');
@@ -62149,7 +67039,7 @@ var factory = exports;
 
     module.exports = AxisModel;
 
-},{"../../model/Component":301,"../axisModelCommonMixin":255,"../axisModelCreator":256,"zrender/lib/core/util":375}],288:[function(require,module,exports){
+},{"../../model/Component":312,"../axisModelCommonMixin":266,"../axisModelCreator":267,"zrender/lib/core/util":386}],299:[function(require,module,exports){
 /**
  * Single coordinates system.
  */
@@ -62402,7 +67292,7 @@ var factory = exports;
     module.exports = Single;
 
 
-},{"../../util/layout":329,"../axisHelper":254,"./SingleAxis":289}],289:[function(require,module,exports){
+},{"../../util/layout":340,"../axisHelper":265,"./SingleAxis":300}],300:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -62524,7 +67414,7 @@ var factory = exports;
 
     module.exports = SingleAxis;
 
-},{"../Axis":251,"../axisHelper":254,"zrender/lib/core/util":375}],290:[function(require,module,exports){
+},{"../Axis":262,"../axisHelper":265,"zrender/lib/core/util":386}],301:[function(require,module,exports){
 /**
  * Single coordinate system creator.
  */
@@ -62571,7 +67461,7 @@ var factory = exports;
         dimensions: Single.prototype.dimensions
     });
 
-},{"../../CoordinateSystem":21,"./Single":288}],291:[function(require,module,exports){
+},{"../../CoordinateSystem":32,"./Single":299}],302:[function(require,module,exports){
 'use strict';
 
 
@@ -62696,7 +67586,7 @@ var factory = exports;
 
     module.exports = DataDiffer;
 
-},{}],292:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 'use strict';
 /**
  * Graph data structure
@@ -63211,7 +68101,7 @@ var factory = exports;
 
     module.exports = Graph;
 
-},{"zrender/lib/core/util":375}],293:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],304:[function(require,module,exports){
 (function (global){
 /**
  * List for data storage
@@ -64357,7 +69247,7 @@ var factory = exports;
     module.exports = List;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../model/Model":303,"../util/model":330,"./DataDiffer":291,"zrender/lib/core/util":375}],294:[function(require,module,exports){
+},{"../model/Model":314,"../util/model":341,"./DataDiffer":302,"zrender/lib/core/util":386}],305:[function(require,module,exports){
 /**
  * Tree data structure
  *
@@ -64830,7 +69720,7 @@ var factory = exports;
 
     module.exports = Tree;
 
-},{"../model/Model":303,"./List":293,"./helper/completeDimensions":295,"./helper/linkList":296,"zrender/lib/core/util":375}],295:[function(require,module,exports){
+},{"../model/Model":314,"./List":304,"./helper/completeDimensions":306,"./helper/linkList":307,"zrender/lib/core/util":386}],306:[function(require,module,exports){
 /**
  * Complete dimensions by data (guess dimension).
  */
@@ -64896,7 +69786,7 @@ var factory = exports;
     module.exports = completeDimensions;
 
 
-},{"zrender/lib/core/util":375}],296:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],307:[function(require,module,exports){
 /**
  * Link lists and struct (graph or tree)
  */
@@ -65030,7 +69920,7 @@ var factory = exports;
 
     module.exports = linkList;
 
-},{"zrender/lib/core/util":375}],297:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],308:[function(require,module,exports){
 (function (global){
 // Enable DEV mode when using source code without build. which has no __DEV__ variable
 // In build process 'typeof __DEV__' will be replace with 'boolean'
@@ -66912,7 +71802,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = echarts;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./CoordinateSystem":21,"./ExtensionAPI":22,"./data/List":293,"./loading/default":300,"./model/Component":301,"./model/Global":302,"./model/Model":303,"./model/OptionManager":304,"./model/Series":305,"./preprocessor/backwardCompat":314,"./util/format":327,"./util/graphic":328,"./util/model":330,"./util/number":331,"./util/throttle":333,"./view/Chart":334,"./view/Component":335,"./visual/seriesColor":338,"zrender":413,"zrender/lib/core/env":369,"zrender/lib/core/matrix":373,"zrender/lib/core/timsort":374,"zrender/lib/core/util":375,"zrender/lib/core/vector":376,"zrender/lib/mixin/Eventful":404,"zrender/lib/tool/color":406}],298:[function(require,module,exports){
+},{"./CoordinateSystem":32,"./ExtensionAPI":33,"./data/List":304,"./loading/default":311,"./model/Component":312,"./model/Global":313,"./model/Model":314,"./model/OptionManager":315,"./model/Series":316,"./preprocessor/backwardCompat":325,"./util/format":338,"./util/graphic":339,"./util/model":341,"./util/number":342,"./util/throttle":344,"./view/Chart":345,"./view/Component":346,"./visual/seriesColor":349,"zrender":424,"zrender/lib/core/env":380,"zrender/lib/core/matrix":384,"zrender/lib/core/timsort":385,"zrender/lib/core/util":386,"zrender/lib/core/vector":387,"zrender/lib/mixin/Eventful":415,"zrender/lib/tool/color":417}],309:[function(require,module,exports){
 'use strict';
 
 
@@ -67160,7 +72050,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = barLayoutGrid;
 
-},{"../util/number":331,"zrender/lib/core/util":375}],299:[function(require,module,exports){
+},{"../util/number":342,"zrender/lib/core/util":386}],310:[function(require,module,exports){
 
 
     module.exports = function (seriesType, ecModel) {
@@ -67189,7 +72079,7 @@ if (typeof __DEV__ === 'undefined') {
         });
     };
 
-},{}],300:[function(require,module,exports){
+},{}],311:[function(require,module,exports){
 
 
     var graphic = require('../util/graphic');
@@ -67288,7 +72178,7 @@ if (typeof __DEV__ === 'undefined') {
         return group;
     };
 
-},{"../util/graphic":328,"zrender/lib/core/util":375}],301:[function(require,module,exports){
+},{"../util/graphic":339,"zrender/lib/core/util":386}],312:[function(require,module,exports){
 /**
  * Component model
  *
@@ -67483,7 +72373,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = ComponentModel;
 
-},{"../util/clazz":325,"../util/component":326,"../util/layout":329,"./Model":303,"./mixin/boxLayout":308,"zrender/lib/core/util":375}],302:[function(require,module,exports){
+},{"../util/clazz":336,"../util/component":337,"../util/layout":340,"./Model":314,"./mixin/boxLayout":319,"zrender/lib/core/util":386}],313:[function(require,module,exports){
 /**
  * ECharts global model
  *
@@ -68191,7 +73081,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = GlobalModel;
 
-},{"../util/model":330,"./Component":301,"./Model":303,"./globalDefault":306,"./mixin/colorPalette":309,"zrender/lib/core/util":375}],303:[function(require,module,exports){
+},{"../util/model":341,"./Component":312,"./Model":314,"./globalDefault":317,"./mixin/colorPalette":320,"zrender/lib/core/util":386}],314:[function(require,module,exports){
 /**
  * @module echarts/model/Model
  */
@@ -68389,7 +73279,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Model;
 
-},{"../util/clazz":325,"./mixin/areaStyle":307,"./mixin/itemStyle":310,"./mixin/lineStyle":311,"./mixin/textStyle":313,"zrender/lib/core/env":369,"zrender/lib/core/util":375}],304:[function(require,module,exports){
+},{"../util/clazz":336,"./mixin/areaStyle":318,"./mixin/itemStyle":321,"./mixin/lineStyle":322,"./mixin/textStyle":324,"zrender/lib/core/env":380,"zrender/lib/core/util":386}],315:[function(require,module,exports){
 /**
  * ECharts option manager
  *
@@ -68825,7 +73715,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = OptionManager;
 
-},{"../util/model":330,"./Component":301,"zrender/lib/core/util":375}],305:[function(require,module,exports){
+},{"../util/model":341,"./Component":312,"zrender/lib/core/util":386}],316:[function(require,module,exports){
 'use strict';
 
 
@@ -69150,7 +74040,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = SeriesModel;
 
-},{"../util/clazz":325,"../util/format":327,"../util/layout":329,"../util/model":330,"./Component":301,"./mixin/colorPalette":309,"zrender/lib/core/env":369,"zrender/lib/core/util":375}],306:[function(require,module,exports){
+},{"../util/clazz":336,"../util/format":338,"../util/layout":340,"../util/model":341,"./Component":312,"./mixin/colorPalette":320,"zrender/lib/core/env":380,"zrender/lib/core/util":386}],317:[function(require,module,exports){
 
     var platform = '';
     // Navigator not exists in node
@@ -69207,7 +74097,7 @@ if (typeof __DEV__ === 'undefined') {
         hoverLayerThreshold: 3000
     };
 
-},{}],307:[function(require,module,exports){
+},{}],318:[function(require,module,exports){
 
     module.exports = {
         getAreaStyle: require('./makeStyleMapper')(
@@ -69222,7 +74112,7 @@ if (typeof __DEV__ === 'undefined') {
         )
     };
 
-},{"./makeStyleMapper":312}],308:[function(require,module,exports){
+},{"./makeStyleMapper":323}],319:[function(require,module,exports){
 
 
     module.exports = {
@@ -69238,7 +74128,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{}],309:[function(require,module,exports){
+},{}],320:[function(require,module,exports){
 
 
     var classUtil = require('../../util/clazz');
@@ -69273,7 +74163,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"../../util/clazz":325}],310:[function(require,module,exports){
+},{"../../util/clazz":336}],321:[function(require,module,exports){
 
     var getItemStyle = require('./makeStyleMapper')(
         [
@@ -69304,7 +74194,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"./makeStyleMapper":312}],311:[function(require,module,exports){
+},{"./makeStyleMapper":323}],322:[function(require,module,exports){
 
     var getLineStyle = require('./makeStyleMapper')(
         [
@@ -69337,7 +74227,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"./makeStyleMapper":312}],312:[function(require,module,exports){
+},{"./makeStyleMapper":323}],323:[function(require,module,exports){
 // TODO Parse shadow style
 // TODO Only shallow path support
 
@@ -69366,7 +74256,7 @@ if (typeof __DEV__ === 'undefined') {
         };
     };
 
-},{"zrender/lib/core/util":375}],313:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],324:[function(require,module,exports){
 
 
     var textContain = require('zrender/lib/contain/text');
@@ -69418,7 +74308,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"zrender/lib/contain/text":359}],314:[function(require,module,exports){
+},{"zrender/lib/contain/text":370}],325:[function(require,module,exports){
 // Compatitable with 2.0
 
 
@@ -69524,7 +74414,7 @@ if (typeof __DEV__ === 'undefined') {
         });
     };
 
-},{"./helper/compatStyle":315,"zrender/lib/core/util":375}],315:[function(require,module,exports){
+},{"./helper/compatStyle":326,"zrender/lib/core/util":386}],326:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -69601,7 +74491,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"zrender/lib/core/util":375}],316:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],327:[function(require,module,exports){
 
     module.exports = function (seriesType, ecModel) {
         var legendModels = ecModel.findComponents({
@@ -69625,7 +74515,7 @@ if (typeof __DEV__ === 'undefined') {
         }, this);
     };
 
-},{}],317:[function(require,module,exports){
+},{}],328:[function(require,module,exports){
 
     var samplers = {
         average: function (frame) {
@@ -69704,7 +74594,7 @@ if (typeof __DEV__ === 'undefined') {
         }, this);
     };
 
-},{}],318:[function(require,module,exports){
+},{}],329:[function(require,module,exports){
 /**
  * Interval scale
  * @module echarts/scale/Interval
@@ -69934,7 +74824,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = IntervalScale;
 
 
-},{"../util/format":327,"../util/number":331,"./Scale":321}],319:[function(require,module,exports){
+},{"../util/format":338,"../util/number":342,"./Scale":332}],330:[function(require,module,exports){
 /**
  * Log scale
  * @module echarts/scale/Log
@@ -70126,7 +75016,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = LogScale;
 
-},{"../util/number":331,"./Interval":318,"./Scale":321,"zrender/lib/core/util":375}],320:[function(require,module,exports){
+},{"../util/number":342,"./Interval":329,"./Scale":332,"zrender/lib/core/util":386}],331:[function(require,module,exports){
 /**
  * Linear continuous scale
  * @module echarts/coord/scale/Ordinal
@@ -70229,7 +75119,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = OrdinalScale;
 
-},{"./Scale":321,"zrender/lib/core/util":375}],321:[function(require,module,exports){
+},{"./Scale":332,"zrender/lib/core/util":386}],332:[function(require,module,exports){
 /**
  * // Scale class management
  * @module echarts/scale/Scale
@@ -70362,7 +75252,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Scale;
 
-},{"../util/clazz":325}],322:[function(require,module,exports){
+},{"../util/clazz":336}],333:[function(require,module,exports){
 /**
  * Interval scale
  * @module echarts/coord/scale/Time
@@ -70524,7 +75414,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = TimeScale;
 
-},{"../util/format":327,"../util/number":331,"./Interval":318,"zrender/lib/core/util":375}],323:[function(require,module,exports){
+},{"../util/format":338,"../util/number":342,"./Interval":329,"zrender/lib/core/util":386}],334:[function(require,module,exports){
  
 
     var zrUtil = require('zrender/lib/core/util');
@@ -70626,7 +75516,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = {createWrap: createWrap};
 
-},{"zrender/lib/core/util":375}],324:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],335:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -70733,7 +75623,7 @@ if (typeof __DEV__ === 'undefined') {
     }
     module.exports = nest;
 
-},{"zrender/lib/core/util":375}],325:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],336:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -71001,7 +75891,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = clazz;
 
-},{"zrender/lib/core/util":375}],326:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],337:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -71178,7 +76068,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = componentUtil;
 
-},{"./clazz":325,"zrender/lib/core/util":375}],327:[function(require,module,exports){
+},{"./clazz":336,"zrender/lib/core/util":386}],338:[function(require,module,exports){
 
 
     var zrUtil = require('zrender/lib/core/util');
@@ -71353,7 +76243,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = formatUtil;
 
-},{"./number":331,"zrender/lib/contain/text":359,"zrender/lib/core/util":375}],328:[function(require,module,exports){
+},{"./number":342,"zrender/lib/contain/text":370,"zrender/lib/core/util":386}],339:[function(require,module,exports){
 'use strict';
 
 
@@ -71935,7 +76825,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = graphic;
 
 
-},{"zrender/lib/container/Group":362,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/matrix":373,"zrender/lib/core/util":375,"zrender/lib/core/vector":376,"zrender/lib/graphic/CompoundPath":378,"zrender/lib/graphic/Image":381,"zrender/lib/graphic/LinearGradient":382,"zrender/lib/graphic/Path":383,"zrender/lib/graphic/RadialGradient":385,"zrender/lib/graphic/Text":387,"zrender/lib/graphic/shape/Arc":393,"zrender/lib/graphic/shape/BezierCurve":394,"zrender/lib/graphic/shape/Circle":395,"zrender/lib/graphic/shape/Line":396,"zrender/lib/graphic/shape/Polygon":397,"zrender/lib/graphic/shape/Polyline":398,"zrender/lib/graphic/shape/Rect":399,"zrender/lib/graphic/shape/Ring":400,"zrender/lib/graphic/shape/Sector":401,"zrender/lib/tool/color":406,"zrender/lib/tool/path":407}],329:[function(require,module,exports){
+},{"zrender/lib/container/Group":373,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/matrix":384,"zrender/lib/core/util":386,"zrender/lib/core/vector":387,"zrender/lib/graphic/CompoundPath":389,"zrender/lib/graphic/Image":392,"zrender/lib/graphic/LinearGradient":393,"zrender/lib/graphic/Path":394,"zrender/lib/graphic/RadialGradient":396,"zrender/lib/graphic/Text":398,"zrender/lib/graphic/shape/Arc":404,"zrender/lib/graphic/shape/BezierCurve":405,"zrender/lib/graphic/shape/Circle":406,"zrender/lib/graphic/shape/Line":407,"zrender/lib/graphic/shape/Polygon":408,"zrender/lib/graphic/shape/Polyline":409,"zrender/lib/graphic/shape/Rect":410,"zrender/lib/graphic/shape/Ring":411,"zrender/lib/graphic/shape/Sector":412,"zrender/lib/tool/color":417,"zrender/lib/tool/path":418}],340:[function(require,module,exports){
 'use strict';
 // Layout helpers for each component positioning
 
@@ -72385,7 +77275,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = layout;
 
-},{"./format":327,"./number":331,"zrender/lib/core/BoundingRect":363,"zrender/lib/core/util":375}],330:[function(require,module,exports){
+},{"./format":338,"./number":342,"zrender/lib/core/BoundingRect":374,"zrender/lib/core/util":386}],341:[function(require,module,exports){
 
 
     var formatUtil = require('./format');
@@ -72954,7 +77844,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = modelUtil;
 
-},{"../model/Model":303,"./format":327,"./number":331,"zrender/lib/core/util":375}],331:[function(require,module,exports){
+},{"../model/Model":314,"./format":338,"./number":342,"zrender/lib/core/util":386}],342:[function(require,module,exports){
 /**
  * 数值处理模块
  * @module echarts/util/number
@@ -73283,7 +78173,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = number;
 
-},{}],332:[function(require,module,exports){
+},{}],343:[function(require,module,exports){
 'use strict';
 // Symbol factory
 
@@ -73639,7 +78529,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = symbolUtil;
 
-},{"./graphic":328,"zrender/lib/core/BoundingRect":363}],333:[function(require,module,exports){
+},{"./graphic":339,"zrender/lib/core/BoundingRect":374}],344:[function(require,module,exports){
 
 
     var lib = {};
@@ -73783,7 +78673,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = lib;
 
 
-},{}],334:[function(require,module,exports){
+},{}],345:[function(require,module,exports){
 
 
     var Group = require('zrender/lib/container/Group');
@@ -73927,7 +78817,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Chart;
 
-},{"../util/clazz":325,"../util/component":326,"../util/model":330,"zrender/lib/container/Group":362,"zrender/lib/core/util":375}],335:[function(require,module,exports){
+},{"../util/clazz":336,"../util/component":337,"../util/model":341,"zrender/lib/container/Group":373,"zrender/lib/core/util":386}],346:[function(require,module,exports){
 
 
     var Group = require('zrender/lib/container/Group');
@@ -73975,7 +78865,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Component;
 
-},{"../util/clazz":325,"../util/component":326,"zrender/lib/container/Group":362}],336:[function(require,module,exports){
+},{"../util/clazz":336,"../util/component":337,"zrender/lib/container/Group":373}],347:[function(require,module,exports){
 /**
  * @file Visual mapping.
  */
@@ -74573,7 +79463,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = VisualMapping;
 
 
-},{"../util/number":331,"zrender/lib/core/util":375,"zrender/lib/tool/color":406}],337:[function(require,module,exports){
+},{"../util/number":342,"zrender/lib/core/util":386,"zrender/lib/tool/color":417}],348:[function(require,module,exports){
 // Pick color from palette for each data item.
 // Applicable for charts that require applying color palette
 // in data level (like pie, funnel, chord).
@@ -74620,7 +79510,7 @@ if (typeof __DEV__ === 'undefined') {
         });
     };
 
-},{}],338:[function(require,module,exports){
+},{}],349:[function(require,module,exports){
 
     var Gradient = require('zrender/lib/graphic/Gradient');
     module.exports = function (ecModel) {
@@ -74656,7 +79546,7 @@ if (typeof __DEV__ === 'undefined') {
         ecModel.eachRawSeries(encodeColor);
     };
 
-},{"zrender/lib/graphic/Gradient":380}],339:[function(require,module,exports){
+},{"zrender/lib/graphic/Gradient":391}],350:[function(require,module,exports){
 
 
     module.exports = function (seriesType, defaultSymbolType, legendSymbol, ecModel, api) {
@@ -74701,7 +79591,7 @@ if (typeof __DEV__ === 'undefined') {
         });
     };
 
-},{}],340:[function(require,module,exports){
+},{}],351:[function(require,module,exports){
 /**
  * @file Visual mapping.
  */
@@ -74773,7 +79663,7 @@ if (typeof __DEV__ === 'undefined') {
 
 
 
-},{"zrender/lib/core/util":375}],341:[function(require,module,exports){
+},{"zrender/lib/core/util":386}],352:[function(require,module,exports){
 /**
  * @file Visual solution, for consistent option specification.
  */
@@ -74924,7 +79814,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = visualSolution;
 
 
-},{"./VisualMapping":336,"zrender/lib/core/util":375}],342:[function(require,module,exports){
+},{"./VisualMapping":347,"zrender/lib/core/util":386}],353:[function(require,module,exports){
 'use strict';
 /**
  * @module zrender/Element
@@ -75188,7 +80078,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Element;
 
-},{"./core/guid":371,"./core/util":375,"./mixin/Animatable":402,"./mixin/Eventful":404,"./mixin/Transformable":405}],343:[function(require,module,exports){
+},{"./core/guid":382,"./core/util":386,"./mixin/Animatable":413,"./mixin/Eventful":415,"./mixin/Transformable":416}],354:[function(require,module,exports){
 'use strict';
 /**
  * Handler
@@ -75485,7 +80375,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Handler;
 
-},{"./core/util":375,"./mixin/Draggable":403,"./mixin/Eventful":404}],344:[function(require,module,exports){
+},{"./core/util":386,"./mixin/Draggable":414,"./mixin/Eventful":415}],355:[function(require,module,exports){
 /**
  * @module zrender/Layer
  * @author pissang(https://www.github.com/pissang)
@@ -75716,7 +80606,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Layer;
 
-},{"./config":352,"./core/util":375,"./graphic/Pattern":384,"./graphic/Style":386}],345:[function(require,module,exports){
+},{"./config":363,"./core/util":386,"./graphic/Pattern":395,"./graphic/Style":397}],356:[function(require,module,exports){
 'use strict';
 /**
  * Default canvas painter
@@ -76784,7 +81674,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = Painter;
 
 
-},{"./Layer":344,"./animation/requestAnimationFrame":351,"./config":352,"./core/BoundingRect":363,"./core/log":372,"./core/timsort":374,"./core/util":375,"./graphic/Image":381}],346:[function(require,module,exports){
+},{"./Layer":355,"./animation/requestAnimationFrame":362,"./config":363,"./core/BoundingRect":374,"./core/log":383,"./core/timsort":385,"./core/util":386,"./graphic/Image":392}],357:[function(require,module,exports){
 'use strict';
 /**
  * Storage内容仓库模块
@@ -77064,7 +81954,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = Storage;
 
 
-},{"./container/Group":362,"./core/env":369,"./core/timsort":374,"./core/util":375}],347:[function(require,module,exports){
+},{"./container/Group":373,"./core/env":380,"./core/timsort":385,"./core/util":386}],358:[function(require,module,exports){
 'use strict';
 /**
  * 动画主类, 调度和管理所有动画控制器
@@ -77320,7 +82210,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = Animation;
 
 
-},{"../core/event":370,"../core/util":375,"./Animator":348,"./requestAnimationFrame":351}],348:[function(require,module,exports){
+},{"../core/event":381,"../core/util":386,"./Animator":359,"./requestAnimationFrame":362}],359:[function(require,module,exports){
 /**
  * @module echarts/animation/Animator
  */
@@ -77952,7 +82842,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Animator;
 
-},{"../core/util":375,"../tool/color":406,"./Clip":349}],349:[function(require,module,exports){
+},{"../core/util":386,"../tool/color":417,"./Clip":360}],360:[function(require,module,exports){
 /**
  * 动画主控制器
  * @config target 动画对象，可以是数组，如果是数组的话会批量分发onframe等事件
@@ -78060,7 +82950,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = Clip;
 
 
-},{"./easing":350}],350:[function(require,module,exports){
+},{"./easing":361}],361:[function(require,module,exports){
 /**
  * 缓动代码来自 https://github.com/sole/tween.js/blob/master/src/Tween.js
  * @see http://sole.github.io/tween.js/examples/03_graphs.html
@@ -78407,7 +83297,7 @@ if (typeof __DEV__ === 'undefined') {
 
 
 
-},{}],351:[function(require,module,exports){
+},{}],362:[function(require,module,exports){
 
 
     module.exports = (typeof window !== 'undefined' &&
@@ -78420,7 +83310,7 @@ if (typeof __DEV__ === 'undefined') {
                                 };
 
 
-},{}],352:[function(require,module,exports){
+},{}],363:[function(require,module,exports){
 
     var dpr = 1;
     // If in browser environment
@@ -78448,7 +83338,7 @@ if (typeof __DEV__ === 'undefined') {
 
 
 
-},{}],353:[function(require,module,exports){
+},{}],364:[function(require,module,exports){
 
 
     var normalizeRadian = require('./util').normalizeRadian;
@@ -78510,7 +83400,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"./util":360}],354:[function(require,module,exports){
+},{"./util":371}],365:[function(require,module,exports){
 
 
     var curve = require('../core/curve');
@@ -78553,7 +83443,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"../core/curve":368}],355:[function(require,module,exports){
+},{"../core/curve":379}],366:[function(require,module,exports){
 
     module.exports = {
         /**
@@ -78597,7 +83487,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{}],356:[function(require,module,exports){
+},{}],367:[function(require,module,exports){
 'use strict';
 
 
@@ -78999,7 +83889,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"../core/PathProxy":366,"../core/curve":368,"./arc":353,"./cubic":354,"./line":355,"./quadratic":358,"./util":360,"./windingLine":361}],357:[function(require,module,exports){
+},{"../core/PathProxy":377,"../core/curve":379,"./arc":364,"./cubic":365,"./line":366,"./quadratic":369,"./util":371,"./windingLine":372}],368:[function(require,module,exports){
 
 
     var windingLine = require('./windingLine');
@@ -79038,7 +83928,7 @@ if (typeof __DEV__ === 'undefined') {
         contain: contain
     };
 
-},{"./windingLine":361}],358:[function(require,module,exports){
+},{"./windingLine":372}],369:[function(require,module,exports){
 
 
     var curve = require('../core/curve');
@@ -79079,7 +83969,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"../core/curve":368}],359:[function(require,module,exports){
+},{"../core/curve":379}],370:[function(require,module,exports){
 
 
     var textWidthCache = {};
@@ -79356,7 +84246,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = textContain;
 
-},{"../core/BoundingRect":363,"../core/util":375}],360:[function(require,module,exports){
+},{"../core/BoundingRect":374,"../core/util":386}],371:[function(require,module,exports){
 
 
     var PI2 = Math.PI * 2;
@@ -79370,7 +84260,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{}],361:[function(require,module,exports){
+},{}],372:[function(require,module,exports){
 
     module.exports = function windingLine(x0, y0, x1, y1, x, y) {
         if ((y > y0 && y > y1) || (y < y0 && y < y1)) {
@@ -79393,7 +84283,7 @@ if (typeof __DEV__ === 'undefined') {
         return x_ > x ? dir : 0;
     };
 
-},{}],362:[function(require,module,exports){
+},{}],373:[function(require,module,exports){
 /**
  * Group是一个容器，可以插入子节点，Group的变换也会被应用到子节点上
  * @module zrender/graphic/Group
@@ -79711,7 +84601,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Group;
 
-},{"../Element":342,"../core/BoundingRect":363,"../core/util":375}],363:[function(require,module,exports){
+},{"../Element":353,"../core/BoundingRect":374,"../core/util":386}],374:[function(require,module,exports){
 'use strict';
 /**
  * @module echarts/core/BoundingRect
@@ -79911,7 +84801,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = BoundingRect;
 
-},{"./matrix":373,"./vector":376}],364:[function(require,module,exports){
+},{"./matrix":384,"./vector":387}],375:[function(require,module,exports){
 'use strict';
 /**
  * Only implements needed gestures for mobile.
@@ -80033,7 +84923,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = GestureMgr;
 
 
-},{"./event":370}],365:[function(require,module,exports){
+},{"./event":381}],376:[function(require,module,exports){
 // Simple LRU cache use doubly linked list
 // @module zrender/core/LRU
 
@@ -80204,7 +85094,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = LRU;
 
-},{}],366:[function(require,module,exports){
+},{}],377:[function(require,module,exports){
 'use strict';
 /**
  * Path 代理，可以在`buildPath`中用于替代`ctx`, 会保存每个path操作的命令到pathCommands属性中
@@ -80975,7 +85865,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = PathProxy;
 
-},{"../config":352,"./BoundingRect":363,"./bbox":367,"./curve":368,"./vector":376}],367:[function(require,module,exports){
+},{"../config":363,"./BoundingRect":374,"./bbox":378,"./curve":379,"./vector":387}],378:[function(require,module,exports){
 /**
  * @author Yi Shen(https://github.com/pissang)
  */
@@ -81207,7 +86097,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = bbox;
 
 
-},{"./curve":368,"./vector":376}],368:[function(require,module,exports){
+},{"./curve":379,"./vector":387}],379:[function(require,module,exports){
 'use strict';
 /**
  * 曲线辅助模块
@@ -81749,7 +86639,7 @@ if (typeof __DEV__ === 'undefined') {
         quadraticProjectPoint: quadraticProjectPoint
     };
 
-},{"./vector":376}],369:[function(require,module,exports){
+},{"./vector":387}],380:[function(require,module,exports){
 /**
  * echarts设备环境识别
  *
@@ -81879,7 +86769,7 @@ if (typeof __DEV__ === 'undefined') {
         };
     }
 
-},{}],370:[function(require,module,exports){
+},{}],381:[function(require,module,exports){
 'use strict';
 /**
  * 事件辅助类
@@ -82026,7 +86916,7 @@ if (typeof __DEV__ === 'undefined') {
     };
 
 
-},{"../mixin/Eventful":404,"./env":369}],371:[function(require,module,exports){
+},{"../mixin/Eventful":415,"./env":380}],382:[function(require,module,exports){
 /**
  * zrender: 生成唯一id
  *
@@ -82041,7 +86931,7 @@ if (typeof __DEV__ === 'undefined') {
     };
 
 
-},{}],372:[function(require,module,exports){
+},{}],383:[function(require,module,exports){
 
         var config = require('../config');
 
@@ -82075,7 +86965,7 @@ if (typeof __DEV__ === 'undefined') {
         */
     
 
-},{"../config":352}],373:[function(require,module,exports){
+},{"../config":363}],384:[function(require,module,exports){
 
     var ArrayCtor = typeof Float32Array === 'undefined'
         ? Array
@@ -82235,7 +87125,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = matrix;
 
 
-},{}],374:[function(require,module,exports){
+},{}],385:[function(require,module,exports){
 // https://github.com/mziccard/node-timsort
 
     var DEFAULT_MIN_MERGE = 32;
@@ -82912,7 +87802,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = sort;
 
-},{}],375:[function(require,module,exports){
+},{}],386:[function(require,module,exports){
 /**
  * @module zrender/core/util
  */
@@ -83442,7 +88332,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = util;
 
 
-},{}],376:[function(require,module,exports){
+},{}],387:[function(require,module,exports){
 
     var ArrayCtor = typeof Float32Array === 'undefined'
         ? Array
@@ -83724,7 +88614,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = vector;
 
 
-},{}],377:[function(require,module,exports){
+},{}],388:[function(require,module,exports){
 
 
     var eventTool = require('../core/event');
@@ -84104,7 +88994,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = HandlerDomProxy;
 
-},{"../core/GestureMgr":364,"../core/env":369,"../core/event":370,"../core/util":375,"../mixin/Eventful":404}],378:[function(require,module,exports){
+},{"../core/GestureMgr":375,"../core/env":380,"../core/event":381,"../core/util":386,"../mixin/Eventful":415}],389:[function(require,module,exports){
 // CompoundPath to improve performance
 
 
@@ -84159,7 +89049,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     });
 
-},{"./Path":383}],379:[function(require,module,exports){
+},{"./Path":394}],390:[function(require,module,exports){
 /**
  * 可绘制的图形基类
  * Base class of all displayable graphic objects
@@ -84429,7 +89319,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Displayable;
 
-},{"../Element":342,"../core/util":375,"./Style":386,"./mixin/RectText":392}],380:[function(require,module,exports){
+},{"../Element":353,"../core/util":386,"./Style":397,"./mixin/RectText":403}],391:[function(require,module,exports){
 
 
     /**
@@ -84456,7 +89346,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Gradient;
 
-},{}],381:[function(require,module,exports){
+},{}],392:[function(require,module,exports){
 /**
  * Image element
  * @module zrender/graphic/Image
@@ -84613,7 +89503,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = ZImage;
 
-},{"../core/BoundingRect":363,"../core/LRU":365,"../core/util":375,"./Displayable":379}],382:[function(require,module,exports){
+},{"../core/BoundingRect":374,"../core/LRU":376,"../core/util":386,"./Displayable":390}],393:[function(require,module,exports){
 'use strict';
 
 
@@ -84657,7 +89547,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = LinearGradient;
 
-},{"../core/util":375,"./Gradient":380}],383:[function(require,module,exports){
+},{"../core/util":386,"./Gradient":391}],394:[function(require,module,exports){
 /**
  * Path element
  * @module zrender/graphic/Path
@@ -85018,7 +89908,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Path;
 
-},{"../contain/path":356,"../core/PathProxy":366,"../core/util":375,"./Displayable":379,"./Pattern":384}],384:[function(require,module,exports){
+},{"../contain/path":367,"../core/PathProxy":377,"../core/util":386,"./Displayable":390,"./Pattern":395}],395:[function(require,module,exports){
 
 
     var Pattern = function (image, repeat) {
@@ -85037,7 +89927,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Pattern;
 
-},{}],385:[function(require,module,exports){
+},{}],396:[function(require,module,exports){
 'use strict';
 
 
@@ -85078,7 +89968,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = RadialGradient;
 
-},{"../core/util":375,"./Gradient":380}],386:[function(require,module,exports){
+},{"../core/util":386,"./Gradient":391}],397:[function(require,module,exports){
 /**
  * @module zrender/graphic/Style
  */
@@ -85396,7 +90286,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Style;
 
-},{}],387:[function(require,module,exports){
+},{}],398:[function(require,module,exports){
 /**
  * Text element
  * @module zrender/graphic/Text
@@ -85523,7 +90413,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Text;
 
-},{"../contain/text":359,"../core/util":375,"./Displayable":379}],388:[function(require,module,exports){
+},{"../contain/text":370,"../core/util":386,"./Displayable":390}],399:[function(require,module,exports){
 
 
     var smoothSpline = require('./smoothSpline');
@@ -85566,7 +90456,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"./smoothBezier":390,"./smoothSpline":391}],389:[function(require,module,exports){
+},{"./smoothBezier":401,"./smoothSpline":402}],400:[function(require,module,exports){
 
 
     module.exports = {
@@ -85657,7 +90547,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{}],390:[function(require,module,exports){
+},{}],401:[function(require,module,exports){
 /**
  * 贝塞尔平滑曲线
  * @module zrender/shape/util/smoothBezier
@@ -85760,7 +90650,7 @@ if (typeof __DEV__ === 'undefined') {
     };
 
 
-},{"../../core/vector":376}],391:[function(require,module,exports){
+},{"../../core/vector":387}],402:[function(require,module,exports){
 /**
  * Catmull-Rom spline 插值折线
  * @module zrender/shape/util/smoothSpline
@@ -85832,7 +90722,7 @@ if (typeof __DEV__ === 'undefined') {
     };
 
 
-},{"../../core/vector":376}],392:[function(require,module,exports){
+},{"../../core/vector":387}],403:[function(require,module,exports){
 /**
  * Mixin for drawing text in a element bounding rect
  * @module zrender/mixin/RectText
@@ -85983,7 +90873,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = RectText;
 
-},{"../../contain/text":359,"../../core/BoundingRect":363}],393:[function(require,module,exports){
+},{"../../contain/text":370,"../../core/BoundingRect":374}],404:[function(require,module,exports){
 /**
  * 圆弧
  * @module zrender/graphic/shape/Arc
@@ -86033,7 +90923,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     });
 
-},{"../Path":383}],394:[function(require,module,exports){
+},{"../Path":394}],405:[function(require,module,exports){
 'use strict';
 /**
  * 贝塞尔曲线
@@ -86170,7 +91060,7 @@ if (typeof __DEV__ === 'undefined') {
     });
 
 
-},{"../../core/curve":368,"../../core/vector":376,"../Path":383}],395:[function(require,module,exports){
+},{"../../core/curve":379,"../../core/vector":387,"../Path":394}],406:[function(require,module,exports){
 'use strict';
 /**
  * 圆形
@@ -86203,7 +91093,7 @@ if (typeof __DEV__ === 'undefined') {
     });
 
 
-},{"../Path":383}],396:[function(require,module,exports){
+},{"../Path":394}],407:[function(require,module,exports){
 /**
  * 直线
  * @module zrender/graphic/shape/Line
@@ -86264,7 +91154,7 @@ if (typeof __DEV__ === 'undefined') {
     });
 
 
-},{"../Path":383}],397:[function(require,module,exports){
+},{"../Path":394}],408:[function(require,module,exports){
 /**
  * 多边形
  * @module zrender/shape/Polygon
@@ -86290,7 +91180,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     });
 
-},{"../Path":383,"../helper/poly":388}],398:[function(require,module,exports){
+},{"../Path":394,"../helper/poly":399}],409:[function(require,module,exports){
 /**
  * @module zrender/graphic/shape/Polyline
  */
@@ -86321,7 +91211,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     });
 
-},{"../Path":383,"../helper/poly":388}],399:[function(require,module,exports){
+},{"../Path":394,"../helper/poly":399}],410:[function(require,module,exports){
 /**
  * 矩形
  * @module zrender/graphic/shape/Rect
@@ -86365,7 +91255,7 @@ if (typeof __DEV__ === 'undefined') {
     });
 
 
-},{"../Path":383,"../helper/roundRect":389}],400:[function(require,module,exports){
+},{"../Path":394,"../helper/roundRect":400}],411:[function(require,module,exports){
 /**
  * 圆环
  * @module zrender/graphic/shape/Ring
@@ -86395,7 +91285,7 @@ if (typeof __DEV__ === 'undefined') {
     });
 
 
-},{"../Path":383}],401:[function(require,module,exports){
+},{"../Path":394}],412:[function(require,module,exports){
 /**
  * 扇形
  * @module zrender/graphic/shape/Sector
@@ -86510,7 +91400,7 @@ if (typeof __DEV__ === 'undefined') {
     });
 
 
-},{"../../core/env":369,"../Path":383}],402:[function(require,module,exports){
+},{"../../core/env":380,"../Path":394}],413:[function(require,module,exports){
 'use strict';
 /**
  * @module zrender/mixin/Animatable
@@ -86780,7 +91670,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Animatable;
 
-},{"../animation/Animator":348,"../core/log":372,"../core/util":375}],403:[function(require,module,exports){
+},{"../animation/Animator":359,"../core/log":383,"../core/util":386}],414:[function(require,module,exports){
 // TODO Draggable for group
 // FIXME Draggable on element which has parent rotation or scale
 
@@ -86864,7 +91754,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = Draggable;
 
-},{}],404:[function(require,module,exports){
+},{}],415:[function(require,module,exports){
 /**
  * 事件扩展
  * @module zrender/mixin/Eventful
@@ -87168,7 +92058,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = Eventful;
 
 
-},{}],405:[function(require,module,exports){
+},{}],416:[function(require,module,exports){
 'use strict';
 /**
  * 提供变换扩展
@@ -87420,7 +92310,7 @@ if (typeof __DEV__ === 'undefined') {
     module.exports = Transformable;
 
 
-},{"../core/matrix":373,"../core/vector":376}],406:[function(require,module,exports){
+},{"../core/matrix":384,"../core/vector":387}],417:[function(require,module,exports){
 /**
  * @module zrender/tool/color
  */
@@ -87899,7 +92789,7 @@ if (typeof __DEV__ === 'undefined') {
 
 
 
-},{}],407:[function(require,module,exports){
+},{}],418:[function(require,module,exports){
 
 
     var Path = require('../graphic/Path');
@@ -88303,7 +93193,7 @@ if (typeof __DEV__ === 'undefined') {
         }
     };
 
-},{"../core/PathProxy":366,"../core/matrix":373,"../graphic/Path":383,"./transformPath":408}],408:[function(require,module,exports){
+},{"../core/PathProxy":377,"../core/matrix":384,"../graphic/Path":394,"./transformPath":419}],419:[function(require,module,exports){
 
 
     var CMD = require('../core/PathProxy').CMD;
@@ -88400,7 +93290,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = transformPath;
 
-},{"../core/PathProxy":366,"../core/vector":376}],409:[function(require,module,exports){
+},{"../core/PathProxy":377,"../core/vector":387}],420:[function(require,module,exports){
 /**
  * VML Painter.
  *
@@ -88595,7 +93485,7 @@ if (typeof __DEV__ === 'undefined') {
 
     module.exports = VMLPainter;
 
-},{"../core/log":372,"./core":410}],410:[function(require,module,exports){
+},{"../core/log":383,"./core":421}],421:[function(require,module,exports){
 
 
 if (!require('../core/env').canvasSupported) {
@@ -88644,7 +93534,7 @@ if (!require('../core/env').canvasSupported) {
     };
 }
 
-},{"../core/env":369}],411:[function(require,module,exports){
+},{"../core/env":380}],422:[function(require,module,exports){
 // http://www.w3.org/TR/NOTE-VML
 // TODO Use proxy like svg instead of overwrite brush methods
 
@@ -89700,12 +94590,12 @@ if (!require('../core/env').canvasSupported) {
     };
 }
 
-},{"../contain/text":359,"../core/BoundingRect":363,"../core/PathProxy":366,"../core/env":369,"../core/vector":376,"../graphic/Displayable":379,"../graphic/Gradient":380,"../graphic/Image":381,"../graphic/Path":383,"../graphic/Text":387,"../graphic/mixin/RectText":392,"../tool/color":406,"./core":410}],412:[function(require,module,exports){
+},{"../contain/text":370,"../core/BoundingRect":374,"../core/PathProxy":377,"../core/env":380,"../core/vector":387,"../graphic/Displayable":390,"../graphic/Gradient":391,"../graphic/Image":392,"../graphic/Path":394,"../graphic/Text":398,"../graphic/mixin/RectText":403,"../tool/color":417,"./core":421}],423:[function(require,module,exports){
 
     require('./graphic');
     require('../zrender').registerPainter('vml', require('./Painter'));
 
-},{"../zrender":413,"./Painter":409,"./graphic":411}],413:[function(require,module,exports){
+},{"../zrender":424,"./Painter":420,"./graphic":422}],424:[function(require,module,exports){
 /*!
  * ZRender, a high performance 2d drawing library.
  *
@@ -90131,7 +95021,7 @@ if (!require('../core/env').canvasSupported) {
     module.exports = zrender;
 
 
-},{"./Handler":343,"./Painter":345,"./Storage":346,"./animation/Animation":347,"./core/env":369,"./core/guid":371,"./core/util":375,"./dom/HandlerProxy":377}],414:[function(require,module,exports){
+},{"./Handler":354,"./Painter":356,"./Storage":357,"./animation/Animation":358,"./core/env":380,"./core/guid":382,"./core/util":386,"./dom/HandlerProxy":388}],425:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.1.1
  * https://jquery.com/
@@ -100353,9 +105243,9 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],415:[function(require,module,exports){
+},{}],426:[function(require,module,exports){
 arguments[4][2][0].apply(exports,arguments)
-},{"dup":2}],416:[function(require,module,exports){
+},{"dup":2}],427:[function(require,module,exports){
 'use strict';
 
 window.jQuery = window.$ = require('jquery');
@@ -100367,13 +105257,13 @@ require('bootstrap-progressbar/bootstrap-progressbar.min.js');
 
 require('datatables.net')(window, $);
 require('datatables.net-bs')(window, $);
-// require('datatables.net-buttons-bs')(window, $);
-// require('datatables.net-buttons/js/dataTables.buttons')(window, $);
-// require('datatables.net-buttons/js/buttons.html5')(window, $);
-// require('datatables.net-buttons/js/buttons.flash')(window, $);
-// require('datatables.net-buttons/js/buttons.colVis')(window, $);
-// require('datatables.net-buttons/js/buttons.print')(window, $);
+require('datatables.net-buttons-bs')(window, $);
+require('datatables.net-buttons/js/dataTables.buttons')(window, $);
+require('datatables.net-buttons/js/buttons.html5')(window, $);
+require('datatables.net-buttons/js/buttons.flash')(window, $);
+require('datatables.net-buttons/js/buttons.colVis')(window, $);
+require('datatables.net-buttons/js/buttons.print')(window, $);
 
-},{"bootstrap":4,"bootstrap-daterangepicker":1,"bootstrap-progressbar/bootstrap-progressbar.min.js":3,"datatables.net":19,"datatables.net-bs":17,"echarts":20,"jquery":414,"moment":415}]},{},[416]);
+},{"bootstrap":4,"bootstrap-daterangepicker":1,"bootstrap-progressbar/bootstrap-progressbar.min.js":3,"datatables.net":30,"datatables.net-bs":17,"datatables.net-buttons-bs":19,"datatables.net-buttons/js/buttons.colVis":24,"datatables.net-buttons/js/buttons.flash":25,"datatables.net-buttons/js/buttons.html5":26,"datatables.net-buttons/js/buttons.print":27,"datatables.net-buttons/js/dataTables.buttons":28,"echarts":31,"jquery":425,"moment":426}]},{},[427]);
 
 //# sourceMappingURL=main.js.map

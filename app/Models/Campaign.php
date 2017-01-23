@@ -27,4 +27,16 @@ class Campaign extends Model
        'Done' 
     ];
 
+    public static $promoType = [
+        'CPA' => 'CPA: Cost Per Action', 
+        'CPI' => 'CPI: Cost Per Install',
+        'CPC' => 'CPC: Cost Per Click',
+        'CPV' => 'CPV: Cost Per Visit',
+        'CPM' => 'CPM: Cost Per Mile',
+        'CPS' => 'CPS: Cost Per Sale',
+        'CPL' => 'CPL: Cost Per Lead',
+        'PPC' => 'PPC: Pay Per Call',
+        'SUB' => 'Subscription',
+    ];
+
 }

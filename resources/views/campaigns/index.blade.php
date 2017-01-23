@@ -35,11 +35,11 @@
           <thead>
             <tr>
               <th style="width: 1%">#</th>
-              <th style="width: 20%">Campaign</th>
-              <th>Advertising Cycle</th>
-              <th>Project Progress</th>
-              <th>Status</th>
-              <th style="width: 20%">#Edit</th>
+              <th style="width: 40%">Campaign</th>
+              <th style="width: 20%">Advertising Cycle</th>
+              <th style="width: 20%">Project Progress</th>
+              <th style="width: 10%">Status</th>
+              <th style="width: 9%">#Edit</th>
             </tr>
           </thead>
           <tbody>

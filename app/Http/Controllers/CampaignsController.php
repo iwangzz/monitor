@@ -66,8 +66,12 @@ class CampaignsController extends Controller
         $campaign = Campaign::findOrFail($id);
         if($campaign) {
             return view('campaigns.campaign-detail')
-                ->withCampaign($campaign)
-                ->withOpt($opt);
+                ->with([
+                    'campaign' => $campaign,
+                    'opt' => $opt,
+                    'timezones' => \App\Setting::$timezones,
+                    'promoType' => Campaign::$promoType,
+                ]);
         }
     }
 

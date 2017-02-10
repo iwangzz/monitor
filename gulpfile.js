@@ -26,6 +26,7 @@ elixir(function(mix) {
         'daterangepicker.css'
     ], 'public/css/main.css')
     .browserify('main.js', 'public/js/main.js')
+    .browserify('campaign.js', 'public/js/campaign.js')
     .scripts([
         'custom.js',
         'helper.js',
@@ -33,7 +34,8 @@ elixir(function(mix) {
     .version([
         'css/main.css',
         'js/app.js',
-        'js/main.js'
+        'js/main.js',
+        'js/campaign.js'
     ])
 });
 

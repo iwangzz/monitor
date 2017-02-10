@@ -4,6 +4,7 @@
 <?php
   $now = time();
 ?>
+<div id="campaign"></div>
 <div class="page-title">
   <div class="title_left">
     <h3>Campaign Detail</h3>
@@ -116,6 +117,7 @@
 </div>
 @endsection
 @push('scripts')
+<script src="{{ elixir('js/campaign.js') }}"></script>
 <script>
 $(function() {
     $.ajaxSetup({
@@ -135,7 +137,7 @@ $(function() {
         "<'row'<'col-sm-12'tr>>" +
         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
         "serverSide": true,
-        "ajax": {
+        ajax: {
           url: "http://localhost:80/camp/{{ $campaign->id }}/basis/dt",
           data: function(d) {
             d.startDate = $('#start-date').val();
@@ -148,7 +150,23 @@ $(function() {
             className: "btn-sm"
           }
         ],
-         // "bLengthChange": true,
+        language: {  
+            'emptyTable': '没有数据',  
+            'loadingRecords': '加载中...',  
+            'processing': '查询中...',  
+            'search': '检索:',  
+            'lengthMenu': '每页 _MENU_ 件',  
+            'zeroRecords': '没有数据',  
+            'paginate': {  
+                'first':      '第一页',  
+                'last':       '最后一页',  
+                'next':       '',  
+                'previous':   ''  
+            },  
+            'info': '第 _PAGE_ 页 / 总 _PAGES_ 页',  
+            'infoEmpty': '没有数据',  
+            'infoFiltered': '(过滤总件数 _MAX_ 条)'  
+        },  
         responsive: true,
         columns: [
           {
@@ -179,7 +197,7 @@ $(function() {
         "<'row'<'col-sm-12'tr>>" +
         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
         "serverSide": true,
-        "ajax": {
+        ajax: {
           url: "http://localhost:80/camp/{{ $campaign->id }}/fraud/dt",
           data: function(d) {
             d.startDate = $('#start-date').val();
@@ -220,7 +238,6 @@ $(function() {
       $('#reportrange_right span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
       $('#start-date').val(start.format('YYYY-MM-DD'));
       $('#end-date').val(end.format('YYYY-MM-DD'));
-      console.log(11);
       table.api().ajax.reload()
     };
     var option = {

@@ -106,6 +106,7 @@ $(function() {
       }
     })
     showTableHtml('{{ $opt }}');
+    
     var html = '<div id="reportrange_right" class="pull-left" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; margin-bottom: 20px;">' + 
               '<i class="glyphicon glyphicon-calendar fa fa-calendar"></i>' +
               '<span>December 30, 2014 - January 28, 2016</span> <b class="caret"></b>' +

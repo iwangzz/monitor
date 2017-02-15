@@ -12,6 +12,9 @@ var elixir = require('laravel-elixir');
  */
 
 elixir(function(mix) {
+    if (elixir.config.production) {
+      process.env.NODE_ENV = 'production';
+    }
     mix.copy('node_modules/font-awesome/fonts', 'public/fonts')
     .copy('node_modules/bootstrap-sass/assets/fonts/bootstrap/', 'public/build/fonts/bootstrap')
     .copy('node_modules/animate.css/animate.min.css', 'resources/assets/css/animate.min.css')

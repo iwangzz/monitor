@@ -27,6 +27,7 @@ elixir(function(mix) {
     ], 'public/css/main.css')
     .browserify('main.js', 'public/js/main.js')
     .browserify('campaign.js', 'public/js/campaign.js')
+    .browserify('components/Datatable.js', 'public/js/components/datatable-select.js')
     .scripts([
         'custom.js',
         'helper.js',
@@ -35,7 +36,8 @@ elixir(function(mix) {
         'css/main.css',
         'js/app.js',
         'js/main.js',
-        'js/campaign.js'
+        'js/campaign.js',
+        'js/components/datatable-select.js'
     ])
 });
 

@@ -4,9 +4,8 @@
 <?php
   $now = time();
 ?>
-<div id="campaign"></div>
-<div class="page-title">
-  <div class="title_left">
+<div class="raw page-title">
+  <div class="col-md-12 title_left">
     <h3>Campaign Detail</h3>
   </div>
 </div>
@@ -87,26 +86,7 @@
             </ul>
             <div class="tab-content">
               <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
-                  <table id="campaign-detail" class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        @if ($opt == 'kpi') 
-                          <th>Affiliate ID</th>
-                          <th>Affiliate Publisher</th>
-                          <th>PV</th>
-                          <th>UV</th>
-                          <th>Conversion</th>
-                          <th>CVR</th>
-                        @else
-                          <th>Affiliate ID</th>
-                          <th>Affiliate Publisher</th>
-                          <th>Conversion</th>
-                          <th>Invalid Conversion</th>
-                          <th>Invalid Proportion</th>
-                        @endif
-                      </tr>
-                    </thead>
-                  </table>
+                  <div id="datatable-select"></div>
               </div>
             </div>
           </div>
@@ -117,9 +97,11 @@
 </div>
 @endsection
 @push('scripts')
-<script src="{{ elixir('js/campaign.js') }}"></script>
+<script src="{{ elixir('js/components/datatable-select.js') }}"></script>
 <script>
 $(function() {
+    showTableHtml('{{ $opt }}');
+
     $.ajaxSetup({
       'headers': {
         'ticket': 'eyJpdiI6IlwvS1ZMNTJOWitSeXhpRnhISlpHcWlRPT0iLCJ2YWx1ZSI6IkszbGNKU1MzTE5LQTEzWGd4Tll1ZW9QZ0pEc2p2MmdVakF4UHFGZmhLQnhpdWZDSTB4K2Vmb2h0VXRNWVpsTk5FZUViVHYrREVqZ2VwRnZFNExGd3pBPT0iLCJtYWMiOiIzZDZhODMyMjYzYzZkMmJlYjhjNzg5ZWEzYmY0Njk3YzM2MGE1ZmU4MWU3Y2EzYWVlOWU0MTI1NzRlNjE5NGRlIn0',
@@ -131,114 +113,12 @@ $(function() {
               '<input type="hidden" value="{{ date('Y-m-d', $now-86400*6) }}" id="start-date">' +
               '<input type="hidden" value="{{ date('Y-m-d', $now) }}" id="end-date">' +
             '</div>';
-    var table =  "{{ $opt }}" == "kpi" ? $('#campaign-detail').dataTable({
-        dom:"<'row'<'col-sm-6 date-picker'><'col-sm-6 mb15 text-right'B>>" +
-        "<'row'<'col-sm-6'l><'col-sm-6 text-right'f>>" +
-        "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-        "serverSide": true,
-        ajax: {
-          url: "http://localhost:80/camp/{{ $campaign->id }}/basis/dt",
-          data: function(d) {
-            d.startDate = $('#start-date').val();
-            d.endDate = $('#end-date').val()
-          }
-        },
-        buttons: [
-          {
-            extend: "csv",
-            className: "btn-sm"
-          }
-        ],
-        language: {  
-            'emptyTable': '没有数据',  
-            'loadingRecords': '加载中...',  
-            'processing': '查询中...',  
-            'search': '检索:',  
-            'lengthMenu': '每页 _MENU_ 件',  
-            'zeroRecords': '没有数据',  
-            'paginate': {  
-                'first':      '第一页',  
-                'last':       '最后一页',  
-                'next':       '',  
-                'previous':   ''  
-            },  
-            'info': '第 _PAGE_ 页 / 总 _PAGES_ 页',  
-            'infoEmpty': '没有数据',  
-            'infoFiltered': '(过滤总件数 _MAX_ 条)'  
-        },  
-        responsive: true,
-        columns: [
-          {
-            data: 'aff_id'
-          },
-          {
-            data: 'aff_pub'
-          },
-          {
-            data: 'pv'
-          },
-          {
-            data: 'uv'
-          },
-          {
-            data: 'conv'
-          },
-          {
-            data: 'cvr',
-            render: function(v){
-                return v + '%';
-            }
-          }
-        ]
-    }) : $('#campaign-detail').dataTable({
-        dom:"<'row'<'col-sm-6 date-picker'><'col-sm-6 mb15 text-right'B>>" +
-        "<'row'<'col-sm-6'l><'col-sm-6 text-right'f>>" +
-        "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-        "serverSide": true,
-        ajax: {
-          url: "http://localhost:80/camp/{{ $campaign->id }}/fraud/dt",
-          data: function(d) {
-            d.startDate = $('#start-date').val();
-            d.endDate = $('#end-date').val()
-          }
-        },
-        buttons: [
-          {
-            extend: "csv",
-            className: "btn-sm"
-          }
-        ],
-        responsive: true,
-        columns: [
-          {
-            data: 'aff_id'
-          },
-          {
-            data: 'aff_pub'
-          },
-          {
-            data: 'conv'
-          },
-          {
-            data: 'fraud_conv'
-          },
-          {
-            data: 'fraud_rate',
-            render: function(v){
-                return v ? v + '%' : '';
-            }
-          }
-        ]
-    });
-
     $('.date-picker').html(html);
     var cb = function(start, end, label) {
       $('#reportrange_right span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
       $('#start-date').val(start.format('YYYY-MM-DD'));
       $('#end-date').val(end.format('YYYY-MM-DD'));
-      table.api().ajax.reload()
+      detailTable.api().ajax.reload()
     };
     var option = {
       startDate: moment().subtract(6, 'days'),
@@ -281,7 +161,7 @@ $(function() {
     };
     $('#reportrange_right span').html(moment().subtract(6, 'days').format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
     $('#reportrange_right').daterangepicker(option, cb);
-
+    
     var theme = {
           color: [
               '#26B99A', '#34495E', '#BDC3C7', '#3498DB',

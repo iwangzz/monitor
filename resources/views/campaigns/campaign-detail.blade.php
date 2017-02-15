@@ -100,13 +100,12 @@
 <script src="{{ elixir('js/components/datatable-select.js') }}"></script>
 <script>
 $(function() {
-    showTableHtml('{{ $opt }}');
-
     $.ajaxSetup({
       'headers': {
         'ticket': 'eyJpdiI6IlwvS1ZMNTJOWitSeXhpRnhISlpHcWlRPT0iLCJ2YWx1ZSI6IkszbGNKU1MzTE5LQTEzWGd4Tll1ZW9QZ0pEc2p2MmdVakF4UHFGZmhLQnhpdWZDSTB4K2Vmb2h0VXRNWVpsTk5FZUViVHYrREVqZ2VwRnZFNExGd3pBPT0iLCJtYWMiOiIzZDZhODMyMjYzYzZkMmJlYjhjNzg5ZWEzYmY0Njk3YzM2MGE1ZmU4MWU3Y2EzYWVlOWU0MTI1NzRlNjE5NGRlIn0',
       }
     })
+    showTableHtml('{{ $opt }}');
     var html = '<div id="reportrange_right" class="pull-left" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; margin-bottom: 20px;">' + 
               '<i class="glyphicon glyphicon-calendar fa fa-calendar"></i>' +
               '<span>December 30, 2014 - January 28, 2016</span> <b class="caret"></b>' +

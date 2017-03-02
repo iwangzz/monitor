@@ -4,5 +4,6 @@ README.md
 public/css
 public/js
 public/build
+resources/assets/css/*
 .env
 .env.example

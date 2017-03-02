@@ -12,7 +12,7 @@ class ChildNode extends Component {
 
         curData.map(function(row, index) {
             tbody.push(
-                <tr key={index}>
+                <tr key={index} className={this.props.colName == 'aff' ? ($.inArray(row.aff_id, affExpand) == -1 ? "" : "tr-gray" ) : (this.props.colName == 'pub' ? ($.inArray(row.aff_pub, affPubExpand) == -1 ? "" : "tr-gray" ) : "")}>
                     <td className='text-center' width="14%">
                         {this.props.colName == 'aff' ? (<a href="javascript:;" onClick={this.props.onClick.bind(this, 'aff_id-'+row.aff_id)}><span className={$.inArray(row.aff_id, affExpand) == -1 ? "glyphicon glyphicon-chevron-right" : "glyphicon glyphicon-chevron-down"}>{row.aff_id}</span></a>) : (this.props.colName == 'pub' ? (<a href="javascript:;" onClick={this.props.onClick.bind(this, 'aff_pub-'+row.aff_pub)}><span className={$.inArray(row.aff_pub, affPubExpand) == -1 ? "glyphicon glyphicon-chevron-right" : "glyphicon glyphicon-chevron-down"}>{row.aff_pub}</span></a>) : row.group)}
                     </td>
@@ -26,16 +26,16 @@ class ChildNode extends Component {
                     <td width="9%">{row.p_cvr}</td>
                     <td width="14%">
                         <div className="ml-25 dropdown pull-left">
-                          <button className="btn btn-default dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                            Dropdown
-                            <span className="caret"></span>
+                          <button className="btn btn-default btn-sm dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Actions <span className="caret"></span>
                           </button>
                           <ul className="dropdown-menu" aria-labelledby="dropdownMenu" onChange={this.props.onChange}>
-                            <li><a href="#">Action</a></li>
-                            <li><a href="#">Another action</a></li>
-                            <li><a href="#">Something else here</a></li>
+                            <li><a href="#">On</a></li>
+                            <li><a href="#">Off</a></li>
+                            <li><a href="#">Whole Off</a></li>
+                            <li><a href="#">Network Off</a></li>
                             <li role="separator" className="divider"></li>
-                            <li><a href="#">More</a></li>
+                            <li><a href="#">More Options</a></li>
                           </ul>
                         </div>
                         <i className="pull-left switch-info fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="the reason of selected"></i>
@@ -70,12 +70,26 @@ class ChildNode extends Component {
                         <th>UV</th>
                         <th>Conversion</th>
                         <th>CVR</th>
-                        <th>Options</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {tbody}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td className="text-center">Total</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td>1000000</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
         )
     }
@@ -194,8 +208,15 @@ export default class Datatable extends Component {
             e = $(e);
             if(!e.attr('id')){
                 e.dataTable({
-                    dom:"<'row'<'col-sm-12'tr>>",
+                    dom:"<'row'<'col-sm-12 text-right'f>>" +
+                    "<'row'<'col-sm-12'tr>>",
                     responsive: true,
+                    buttons: [
+                      {
+                        extend: "csv",
+                        className: "btn-sm"
+                      }
+                    ],
                     columnDefs: [{
                       targets: [0,-1],
                       searchable: false,
@@ -215,8 +236,15 @@ export default class Datatable extends Component {
             e = $(e);
             if(!e.attr('id')) {
                 e.dataTable({
-                    dom:"<'row'<'col-sm-12'tr>>",
+                    dom:"<'row'<'col-sm-12 text-right'f>>" +
+                    "<'row'<'col-sm-12'tr>>",
                     responsive: true,
+                    buttons: [
+                      {
+                        extend: "csv",
+                        className: "btn-sm"
+                      }
+                    ],
                     columnDefs: [{
                       targets: [0,-1],
                       searchable: false,
@@ -233,10 +261,9 @@ export default class Datatable extends Component {
 
     componentDidMount() {
          $('.aff-table').dataTable({
-            dom:"<'row'<'col-sm-6 date-picker'><'col-sm-6 mb15 text-right'B>>" +
-            "<'row'<'col-sm-6'l><'col-sm-6 text-right'f>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            dom:"<'row'<'col-sm-6 date-picker'>>" +
+            "<'row'<'col-sm-6'B><'col-sm-6 text-right'f>>" +
+            "<'row'<'col-sm-12'tr>>",
             buttons: [
               {
                 extend: "csv",
@@ -266,25 +293,6 @@ export default class Datatable extends Component {
     render() {
         return (
             <div className="raw">
-                <div className="col-md-4 mb15">
-                    <form action="" method="" className="form-inline">
-                        <div className="form-group mr15">
-                            <select className="form-control" id="category" name="" onChange={this.handleChange.bind(this)}>
-                                <option value="aff">Affiliate</option>
-                                <option value="aff_pub">Affiliate&Affiliate Publisher</option>
-                                <option value="group">Group</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <select className="form-control" id="conv-time" name="" onChange={this.handleChange.bind(this)}>
-                                <option value="5">5 secs</option>
-                                <option value="30">30 secs</option>
-                                <option value="60">60 secs</option>
-                                <option value="90">90 secs</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
                 <div className="col-md-12">
                     <div>
                         <ChildNode {...this.state} tableName="aff-table" colName='aff' onClick={this.switchDisplay} onChange={this.handleChange} />

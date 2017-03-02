@@ -208,7 +208,7 @@ export default class Datatable extends Component {
             e = $(e);
             if(!e.attr('id')){
                 e.dataTable({
-                    dom:"<'row'<'col-sm-12 text-right'f>>" +
+                    dom:"<'row mt5'<'col-sm-12 text-right'f>>" +
                     "<'row'<'col-sm-12'tr>>",
                     responsive: true,
                     buttons: [
@@ -236,7 +236,7 @@ export default class Datatable extends Component {
             e = $(e);
             if(!e.attr('id')) {
                 e.dataTable({
-                    dom:"<'row'<'col-sm-12 text-right'f>>" +
+                    dom:"<'row mt5'<'col-sm-12 text-right'f>>" +
                     "<'row'<'col-sm-12'tr>>",
                     responsive: true,
                     buttons: [

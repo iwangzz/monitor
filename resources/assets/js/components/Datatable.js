@@ -13,25 +13,32 @@ class ChildNode extends Component {
         curData.map(function(row, index) {
             tbody.push(
                 <tr key={index}>
-                    <td className='text-center'>
+                    <td className='text-center' width="14%">
                         {this.props.colName == 'aff' ? (<a href="javascript:;" onClick={this.props.onClick.bind(this, 'aff_id-'+row.aff_id)}><span className={$.inArray(row.aff_id, affExpand) == -1 ? "glyphicon glyphicon-chevron-right" : "glyphicon glyphicon-chevron-down"}>{row.aff_id}</span></a>) : (this.props.colName == 'pub' ? (<a href="javascript:;" onClick={this.props.onClick.bind(this, 'aff_pub-'+row.aff_pub)}><span className={$.inArray(row.aff_pub, affPubExpand) == -1 ? "glyphicon glyphicon-chevron-right" : "glyphicon glyphicon-chevron-down"}>{row.aff_pub}</span></a>) : row.group)}
                     </td>
-                    <td>{row.t_pv}</td>
-                    <td>{row.t_uv}</td>
-                    <td>{row.t_c}</td>
-                    <td>{row.t_cvr}</td>
-                    <td>{row.p_pv}</td>
-                    <td>{row.p_uv}</td>
-                    <td>{row.p_c}</td>
-                    <td>{row.p_cvr}</td>
-                    <td className="text-center">
-                        <select onChange={this.props.onChange}>
-                            <option value="off">Off</option>
-                            <option value="long off">Permanently Off</option>
-                            <option value="on">On</option>
-                            <option value="more">More</option>
-                        </select>
-                        <i className="switch-info fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="the reason of selected"></i>
+                    <td width="9%">{row.t_pv}</td>
+                    <td width="9%">{row.t_uv}</td>
+                    <td width="9%">{row.t_c}</td>
+                    <td width="9%">{row.t_cvr}</td>
+                    <td width="9%">{row.p_pv}</td>
+                    <td width="9%">{row.p_uv}</td>
+                    <td width="9%">{row.p_c}</td>
+                    <td width="9%">{row.p_cvr}</td>
+                    <td width="14%">
+                        <div className="ml-25 dropdown pull-left">
+                          <button className="btn btn-default dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Dropdown
+                            <span className="caret"></span>
+                          </button>
+                          <ul className="dropdown-menu" aria-labelledby="dropdownMenu" onChange={this.props.onChange}>
+                            <li><a href="#">Action</a></li>
+                            <li><a href="#">Another action</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li role="separator" className="divider"></li>
+                            <li><a href="#">More</a></li>
+                          </ul>
+                        </div>
+                        <i className="pull-left switch-info fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="the reason of selected"></i>
                     </td>
                 </tr>
             )
@@ -140,8 +147,8 @@ export default class Datatable extends Component {
     }
 
     handleChange(e) {
-        let value = e.target.value;
-        // console.log(value);
+        // let value = e.target.value;
+        console.log(e);
     }
 
     switchDisplay(info) {
@@ -221,6 +228,7 @@ export default class Datatable extends Component {
         })
 
         $('[data-toggle="tooltip"]').tooltip()
+        $('.dropdown-toggle').dropdown()
     }
 
     componentDidMount() {
@@ -252,6 +260,7 @@ export default class Datatable extends Component {
         this.first =false;
 
         $('[data-toggle="tooltip"]').tooltip()
+        $('.dropdown-toggle').dropdown()
     }
 
     render() {

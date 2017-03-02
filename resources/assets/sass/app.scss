@@ -104,5 +104,11 @@
 
 .dataTable .glyphicon , .th-first {vertical-align: middle !important;}
 
-.switch-info {font-size:18px !important; color:#26b99a !important;}
+.switch-info {font-size:18px !important; color:#26b99a !important; position:relative; top:6px;}
+
+.dataTable .btn {margin-bottom: 0 !important; font-size:12px;}
+
+.dataTable td {vertical-align: middle !important; padding: 5px !important;}
+
+.ml-25 {margin-left:25px !important;}
 

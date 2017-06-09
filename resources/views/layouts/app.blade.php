@@ -39,6 +39,39 @@
       </div>
     </div>
 
+    <div class="modal fade mark-info-sm in" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+            <h4 class="modal-title" id="mySmallModalLabel">the reason of select</h4>
+          </div>
+          <div class="modal-body">
+            <form class="form-horizontal">
+              <div class="form-group">
+                <label for="option-name" class="col-sm-2 control-label">Option</label>
+                <div class="col-sm-10">
+                  <input type="text" class="form-control" name="option_name" id="option-name" value="" readonly="true">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="mark-info" class="col-sm-2 control-label">Mark Info</label>
+                <div class="col-sm-10">
+                  <input type="text" class="form-control" name="mark_info" id="mark-info" placeholder="reason ...">
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                  <button type="submit" class="btn btn-default">Submit</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
     <script src="{{ elixir('js/main.js') }}"></script>
     <script src="{{ elixir('js/app.js') }}"></script>
     @stack('scripts')

@@ -18,6 +18,7 @@
 Route::auth();
 Route::group(['middleware' => 'auth'], function(){
     Route::get('/', 'CampaignsController@index');
+    Route::get('/campaigns/blacklist', 'CampaignsController@getBlacklist');
     Route::resource('/campaigns', 'CampaignsController');
     Route::get('/campaigns/{campaign}/{opt}', 'CampaignsController@show');
 });

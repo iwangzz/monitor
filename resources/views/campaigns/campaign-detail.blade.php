@@ -4,6 +4,7 @@
 <?php
   $now = time();
 ?>
+
 <div class="raw page-title">
   <div class="col-md-12 title_left">
     <h3>Campaign Detail</h3>
@@ -84,7 +85,7 @@
                   <a href="/campaigns/{{ $campaign->id }}/invalid-conversion">Invalid Conversion </a>
               </li>
             </ul>
-            <div class="tab-content">
+            <div class="tab-content" style="overflow:auto;">
               <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="home-tab">
                   <div id="datatable-select"></div>
               </div>
@@ -100,68 +101,9 @@
 <script src="{{ elixir('js/components/datatable-select.js') }}"></script>
 <script>
 $(function() {
-    $.ajaxSetup({
-      'headers': {
-        'ticket': 'eyJpdiI6IlwvS1ZMNTJOWitSeXhpRnhISlpHcWlRPT0iLCJ2YWx1ZSI6IkszbGNKU1MzTE5LQTEzWGd4Tll1ZW9QZ0pEc2p2MmdVakF4UHFGZmhLQnhpdWZDSTB4K2Vmb2h0VXRNWVpsTk5FZUViVHYrREVqZ2VwRnZFNExGd3pBPT0iLCJtYWMiOiIzZDZhODMyMjYzYzZkMmJlYjhjNzg5ZWEzYmY0Njk3YzM2MGE1ZmU4MWU3Y2EzYWVlOWU0MTI1NzRlNjE5NGRlIn0',
-      }
-    })
     showTableHtml('{{ $opt }}');
-    
-    var html = '<div id="reportrange_right" class="pull-left" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; margin-bottom: 20px;">' + 
-              '<i class="glyphicon glyphicon-calendar fa fa-calendar"></i>' +
-              '<span>December 30, 2014 - January 28, 2016</span> <b class="caret"></b>' +
-              '<input type="hidden" value="{{ date('Y-m-d', $now-86400*6) }}" id="start-date">' +
-              '<input type="hidden" value="{{ date('Y-m-d', $now) }}" id="end-date">' +
-            '</div>';
-    $('.date-picker').html(html);
-    var cb = function(start, end, label) {
-      $('#reportrange_right span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-      $('#start-date').val(start.format('YYYY-MM-DD'));
-      $('#end-date').val(end.format('YYYY-MM-DD'));
-      detailTable.api().ajax.reload()
-    };
-    var option = {
-      startDate: moment().subtract(6, 'days'),
-      endDate: moment(),
-      // minDate: '01/01/2012',
-      // maxDate: '12/31/2015',
-      dateLimit: {
-        days: 60
-      },
-      showDropdowns: true,
-      showWeekNumbers: true,
-      timePicker: false,
-      timePickerIncrement: 1,
-      timePicker12Hour: true,
-      ranges: {
-        'Today': [moment(), moment()],
-        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-        'This Month': [moment().startOf('month'), moment().endOf('month')],
-        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-      },
-      // opens: 'left',
-      opens: 'right',
-      buttonClasses: ['btn btn-default'],
-      applyClass: 'btn-small btn-primary',
-      cancelClass: 'btn-small',
-      format: 'MM/DD/YYYY',
-      separator: ' to ',
-      locale: {
-        applyLabel: 'Submit',
-        cancelLabel: 'Clear',
-        fromLabel: 'From',
-        toLabel: 'To',
-        customRangeLabel: 'Custom',
-        daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-        monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-        firstDay: 1
-      }
-    };
-    $('#reportrange_right span').html(moment().subtract(6, 'days').format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
-    $('#reportrange_right').daterangepicker(option, cb);
-    
+    // detailTable.api().ajax.reload()
+
     var theme = {
           color: [
               '#26B99A', '#34495E', '#BDC3C7', '#3498DB',
@@ -448,22 +390,6 @@ $(function() {
         data: [2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2]
       }]
     });
-
-  // 异步加载数据
-  // $.get('data.json').done(function (data) {
-      // 填入数据
-      // myChart.setOption({
-      //     xAxis: {
-      //         data: data.categories
-      //     },
-      //     series: [{
-      //         // 根据名字对应到相应的系列
-      //         name: '销量',
-      //         data: data.data
-      //     }]
-      // });
-  // });
-
 })
 </script>
 @endpush

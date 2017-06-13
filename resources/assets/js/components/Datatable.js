@@ -7,7 +7,7 @@ class ChildNode extends Component {
     }
 
     render() {
-        const { mapData, level, tableName, affId, expand }  = this.props
+        const { mapData, level, tableName, affId, expand, filterFlag, filterLevel }  = this.props
         let thead = [],  tbody = [],  tfoot = [], th1 = [], th2 = [], tfdata = [], colLength = 2,
             thBase = [
             <th style={{whiteSpace:'nowrap'}}>Gross Click</th>,
@@ -41,7 +41,7 @@ class ChildNode extends Component {
         thead.push(
             <thead>
                 <tr>
-                    <th rowSpan="2" className="th-first text-center"  style={{whiteSpace:'nowrap'}}>{level == 1 ? 'Affiliate ID' : (level == 2 ? 'Aff-Publisher ID' : 'Group') }</th>
+                    <th rowSpan="2" className="th-first text-center"  style={{whiteSpace:'nowrap'}}>{Number(level) == 1 ? 'Affiliate ID' : (Number(level) == 2 ? (filterFlag == 'aff_pub' ? 'Aff-Publisher' : 'Group') : (filterFlag == 'aff_pub' ? 'Group' : 'Aff-Publisher')) }</th>
                     {th1}
                     <th></th>
                 </tr>
@@ -60,8 +60,9 @@ class ChildNode extends Component {
                 </tr>
             </tfoot>
         )
-
-        for (var i in mapData.data) {
+        
+        if (mapData.data && Object.keys(mapData).length > 0) {
+            for (var i in mapData.data) {
             let curData = mapData.data[i], tdata = [];
             let totalData = curData.hasOwnProperty('total') ? curData.total : curData;
             for (var k in totalData) {
@@ -78,9 +79,11 @@ class ChildNode extends Component {
                 <tr key={i}>
                     <td className='text-center' width="10%">
                         {
-                            Number(level) < 3 ? <a href="javascript:;" onClick={this.props.onClick.bind(this, [affId, i])}>
-                                <span className={Number(level) == 1 ? (expand.hasOwnProperty(i) ? "glyphicon glyphicon-chevron-down" : "glyphicon glyphicon-chevron-right") : (expand.hasOwnProperty(affId) && $.inArray(i, expand[affId]) != -1 ? "glyphicon glyphicon-chevron-down" : "glyphicon glyphicon-chevron-right")}>{i}</span>
-                            </a> : i
+                            Number(level) == 1 ? <a href="javascript:;" onClick={this.props.onClick.bind(this, [affId, i])}>
+                                <span className={expand.hasOwnProperty(i) ? "glyphicon glyphicon-chevron-down" : "glyphicon glyphicon-chevron-right"}>{i}</span>
+                            </a> : (Number(level) == 2 && Number(filterLevel) == 3 ? <a href="javascript:;" onClick={this.props.onClick.bind(this, [affId, i])}>
+                                <span className={expand.hasOwnProperty(affId) && $.inArray(i, expand[affId]) != -1 ? "glyphicon glyphicon-chevron-down" : "glyphicon glyphicon-chevron-right"}>{i}</span>
+                            </a> : i)
                         }
                     </td>
                     {tdata}
@@ -118,14 +121,15 @@ class ChildNode extends Component {
             switch(Number(level)) {
                 case 1:
                     if (expand.hasOwnProperty(i) && curData.data) {
-                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} expand={expand}  affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
+                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} filterLevel={filterLevel} expand={expand} filterFlag={filterFlag} affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
                     }
                     break;
                 case 2:
                     if (expand.hasOwnProperty(affId) && $.inArray(i, expand[affId]) != -1 && curData.data) {
-                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} expand={expand}  affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
+                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} filterLevel={filterLevel} expand={expand} filterFlag={filterFlag} affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
                     }
                     break;
+                }
             }
         }
 
@@ -145,34 +149,34 @@ export default class Datatable extends Component {
     constructor(props) {
         super(props)
         this.state = Object.assign({entries: []}, this.getDefaultState())
-        this.loading = true;
         this.loadData()
 
         this.switchDisplay = this.switchDisplay.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.setDefaultState = this.setDefaultState.bind(this)
+        this.handleFormSubmit = this.handleFormSubmit.bind(this)
     }
 
-    getDefaultState(flag) {
-        if (!flag) {
-            return {
-                expand: {},
-                entries: []
-            }
-        } else {
-            return {
-                expand: {},
-                entries: []
-            }
+    getDefaultState() {
+        return {
+            expand: {},
+            entries: [],
+            loading: true,
+            filterFlag: 'aff_pub',
+            filterLevel: 3
         }
     }
 
-    loadData(url) {
-        $.getJSON('/campaigns/blacklist', function(res){
+    loadData(args) {
+        let getData = args ? args : [
+            {},
+            {name: 'flag', value: 'aff_pub'},
+            {name: 'level', value: 3}
+        ]
+        $.getJSON('/campaigns/blacklist', getData, function(res){
             let data  = JSON.parse(res);
             if (data.status == 200) {
-                this.loading = false;
-                this.setState(Object.assign({},this.state,{ entries: data.result }))
+                this.setState(Object.assign({},this.state,{ entries: data.result, loading: false, filterFlag:getData[1].value, filterLevel:getData[2].value}))
             }
         }.bind(this))
     }
@@ -191,36 +195,30 @@ export default class Datatable extends Component {
         }
     }
 
+    handleFormSubmit() {
+        this.loadData($('.filter-form').serializeArray());
+    }
+
     switchDisplay(data) {
         let expand = this.state.expand, initData = $.grep(data, (v) => {return v != ""});
         switch(initData.length){
             case 1:
                 if (expand.hasOwnProperty(initData[0])) {
                     delete expand[initData[0]]
-                    this.setState({
-                        expand: expand,
-                    })
                 } else {
                     expand[initData[0]] = [];
-                    this.setState({
-                        expand: expand,
-                    })
                 }
                 break;
             case 2:
                 if($.inArray(initData[1], expand[initData[0]]) != -1){
                     expand[initData[0]] = $.grep(expand[initData[0]], (v) => {return v != initData[1]})
-                    this.setState({
-                        expand: expand,
-                    })
                 } else {
                     expand[initData[0]].push(initData[1]);
-                    this.setState({
-                        expand: expand,
-                    })
                 }
                 break;
         };
+
+        this.setState(Object.assign({},this.state,{ expand: expand}))
     }
 
     setDefaultState() {
@@ -259,12 +257,6 @@ export default class Datatable extends Component {
                     e.dataTable({
                         dom:"<'row'<'col-sm-12'tr>>",
                         responsive: true,
-                        buttons: [
-                          {
-                            extend: "csv",
-                            className: "btn-sm"
-                          }
-                        ],
                         columnDefs: [{
                           targets: [0,-1],
                           searchable: false,
@@ -288,12 +280,6 @@ export default class Datatable extends Component {
                     e.dataTable({
                         dom:"<'row'<'col-sm-12'tr>>",
                         responsive: true,
-                        buttons: [
-                          {
-                            extend: "csv",
-                            className: "btn-sm"
-                          }
-                        ],
                         columnDefs: [{
                           targets: [0,-1],
                           searchable: false,
@@ -310,17 +296,38 @@ export default class Datatable extends Component {
     }
 
     componentDidMount() {
-        //
+        // 
     }
 
     render() {
-        const loading = this.loading
         return (
-            <div className="raw">
-                <div className="col-md-12">
-                    <div>
-                    {!loading ? <ChildNode mapData={this.state.entries} expand={this.state.expand} level="1" affId=""  tableName="first-table" onClick={this.switchDisplay} onChange={this.handleChange} /> :
-                            <div className="text-center"><img src="/images/loading.gif" /></div>}
+            <div>
+                <div className="raw">
+                    <div className="col-md-12" style={{marginBottom: '15px'}}>
+                        <form className="form-inline filter-form">
+                          <input type="hidden" name="offer_id" value={this.props.campaignId} />
+                          <div className="form-group" style={{marginRight: '20px'}}>
+                            <select defaultValue="aff_pub" className="form-control" name="flag" id="filter-flag" >
+                                <option value="aff_pub">Aff-Publisher</option>
+                                <option value="group">Group</option>
+                            </select>
+                          </div>
+                          <div className="form-group" style={{marginRight: '20px'}}>
+                            <select className="form-control" id="filter-level" defaultValue="2" name="level">
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                          </div>
+                          <button type="button" className="btn btn-primary pull-right" style={{marginBottom: '0px', marginRight: '0px'}} onClick={this.handleFormSubmit}>Submit</button>
+                        </form>                        
+                    </div>
+                </div>
+                <div className="raw">
+                    <div className="col-md-12">
+                        <div>
+                        {!this.state.loading ? <ChildNode mapData={this.state.entries} {...this.state} level="1" affId=""  tableName="first-table" onClick={this.switchDisplay} onChange={this.handleChange} /> :
+                                <div className="text-center"><img src="/images/loading.gif" /></div>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -328,9 +335,9 @@ export default class Datatable extends Component {
     }
 }
 
-window.showTableHtml = function(opt) {
+window.showTableHtml = function(campaignId) {
     render(
-       <Datatable opt={opt} />,
+       <Datatable campaignId={campaignId} />,
        document.getElementById('datatable-select') 
     )   
 }

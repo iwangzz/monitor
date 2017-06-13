@@ -14,3 +14,5 @@ require('datatables.net-buttons/js/buttons.flash')(window, $);
 require('datatables.net-buttons/js/buttons.colVis')(window, $);
 require('datatables.net-buttons/js/buttons.print')(window, $);
 
+require('select2');
+

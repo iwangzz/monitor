@@ -25,16 +25,12 @@
 
           <ul class="stats-overview">
             <li>
-              <a href="/campaigns/{{ $campaign->id }}/kpi">
                 <span class="name">Key Performance Indicator</span>
                 <span class="value text-success" @if($opt == 'kpi') style="color: #e74c3c;" @endif> 2300 </span>
-              </a>
             </li>
             <li>
-              <a href="/campaigns/{{ $campaign->id }}/invalid-conversion">
                 <span class="name"> Invalid Conversion </span>
                 <span class="value text-success" @if($opt == 'invalid-conversion') style="color: #e74c3c;" @endif> 2000 </span>
-              </a>
             </li>
           </ul>
           <br />
@@ -79,10 +75,7 @@
           <div class="" role="tabpanel" data-example-id="togglable-tabs">
             <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
               <li role="presentation" @if($opt == 'kpi') class="active" @endif>
-                  <a href="/campaigns/{{ $campaign->id }}/kpi">Key Performance Indicator</a>
-              </li>
-              <li role="presentation" @if($opt == 'invalid-conversion') class="active" @endif>
-                  <a href="/campaigns/{{ $campaign->id }}/invalid-conversion">Invalid Conversion </a>
+                  <a href="/campaigns/{{ $campaign->id }}/kpi">Overview</a>
               </li>
             </ul>
             <div class="tab-content" style="overflow:auto;">
@@ -101,7 +94,13 @@
 <script src="{{ elixir('js/components/datatable-select.js') }}"></script>
 <script>
 $(function() {
-    showTableHtml('{{ $opt }}');
+    showTableHtml('{{ $campaign->id }}');
+    $('#filter-flag').select2({
+      minimumResultsForSearch: Infinity
+    })
+    $('#filter-level').select2({
+      minimumResultsForSearch: Infinity
+    })
     // detailTable.api().ajax.reload()
 
     var theme = {

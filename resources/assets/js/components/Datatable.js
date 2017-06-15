@@ -7,7 +7,7 @@ class ChildNode extends Component {
     }
 
     render() {
-        const { mapData, level, tableName, affId, expand, filterFlag, filterLevel }  = this.props
+        const { mapData, level, tableName, affId, expand, filterFlag, filterLevel, parent, blockTracks, automate }  = this.props
         let thead = [],  tbody = [],  tfoot = [], th1 = [], th2 = [], tfdata = [], colLength = 2,
             thBase = [
             <th style={{whiteSpace:'nowrap'}}>Gross Click</th>,
@@ -22,13 +22,13 @@ class ChildNode extends Component {
         for (var i in mapData.total) {
             th2.push(thBase);
             colLength += 7;
-            tfdata.push(<td>{mapData.total[i]['gross_click']}</td>)
-            tfdata.push(<td>{mapData.total[i]['unique_click']}</td>)
-            tfdata.push(<td>{mapData.total[i]['conversion']}</td>)
-            tfdata.push(<td>{mapData.total[i]['invalid_conversion']}</td>)
-            tfdata.push(<td>{mapData.total[i]['total_conversion'] > 0 ? (mapData.total[i]['invalid_conversion']*100/mapData.total[i]['total_conversion']).toFixed(2) : 0.00}%</td>)
-            tfdata.push(<td>{mapData.total[i]['gross_click'] > 0 ? (mapData.total[i]['conversion']*100/mapData.total[i]['gross_click']).toFixed(2) : 0.00}%</td>)
-            tfdata.push(<td>{mapData.total[i]['major'] > 0 ? (mapData.total[i]['conversion']*100/mapData.total[i]['conversion']).toFixed(2) : 0.00}%</td>)
+            tfdata.push(<td>{mapData.total[i]['gc']}</td>)
+            tfdata.push(<td>{mapData.total[i]['uc']}</td>)
+            tfdata.push(<td>{mapData.total[i]['cv']}</td>)
+            tfdata.push(<td>{mapData.total[i]['ic']}</td>)
+            tfdata.push(<td>{mapData.total[i]['cv'] > 0 ? (mapData.total[i]['ic']*100/mapData.total[i]['cv']).toFixed(2) : 0}%</td>)
+            tfdata.push(<td>{mapData.total[i]['gc'] > 0 ? (mapData.total[i]['cv']*100/mapData.total[i]['gc']).toFixed(2) : 0}%</td>)
+            tfdata.push(<td>{mapData.total[i]['cv'] > 0 ? (mapData.total[i]['k']*100/mapData.total[i]['cv']).toFixed(2) : 0}%</td>)
             
             switch(i) {
                 case '1':
@@ -43,11 +43,11 @@ class ChildNode extends Component {
                 <tr>
                     <th rowSpan="2" className="th-first text-center"  style={{whiteSpace:'nowrap'}}>{Number(level) == 1 ? 'Affiliate ID' : (Number(level) == 2 ? (filterFlag == 'aff_pub' ? 'Aff-Publisher' : 'Group') : (filterFlag == 'aff_pub' ? 'Group' : 'Aff-Publisher')) }</th>
                     {th1}
-                    <th></th>
+                    {((Number(level) != 2 && filterFlag == 'group') || (Number(level) != 3 && filterFlag == 'aff_pub')) ? <th></th> : '' }
                 </tr>
                 <tr>
                     {th2}
-                    <th width="10%">Status</th>
+                    {((Number(level) != 2 && filterFlag == 'group') || (Number(level) != 3 && filterFlag == 'aff_pub')) ? <th width="10%">Status</th> : '' }
                 </tr>
             </thead>
         )
@@ -56,7 +56,7 @@ class ChildNode extends Component {
                 <tr>
                     <td className="text-center">Total</td>
                     {tfdata}
-                    <td></td>
+                    {((Number(level) != 2 && filterFlag == 'group') || (Number(level) != 3 && filterFlag == 'aff_pub')) ? <td></td> : '' }
                 </tr>
             </tfoot>
         )
@@ -66,13 +66,13 @@ class ChildNode extends Component {
             let curData = mapData.data[i], tdata = [];
             let totalData = curData.hasOwnProperty('total') ? curData.total : curData;
             for (var k in totalData) {
-                tdata.push(<td>{totalData[k]['gross_click']}</td>)
-                tdata.push(<td>{totalData[k]['unique_click']}</td>)
-                tdata.push(<td>{totalData[k]['conversion']}</td>)
-                tdata.push(<td>{totalData[k]['invalid_conversion']}</td>)
-                tdata.push(<td>{totalData[k]['total_conversion'] > 0 ? (totalData[k]['invalid_conversion']*100/totalData[k]['total_conversion']).toFixed(2) : 0.00}%</td>)
-                tdata.push(<td>{totalData[k]['gross_click'] > 0 ? (totalData[k]['conversion']*100/totalData[k]['gross_click']).toFixed(2) : 0.00}%</td>)
-                tdata.push(<td>{totalData[k]['major'] > 0 ? (totalData[k]['conversion']*100/totalData[k]['conversion']).toFixed(2) : 0.00}%</td>)
+                tdata.push(<td>{totalData[k]['gc']}</td>)
+                tdata.push(<td>{totalData[k]['uc']}</td>)
+                tdata.push(<td>{totalData[k]['cv']}</td>)
+                tdata.push(<td>{totalData[k]['ic']}</td>)
+                tdata.push(<td>{totalData[k]['cv'] > 0 ? (totalData[k]['ic']*100/totalData[k]['cv']).toFixed(2) : 0}%</td>)
+                tdata.push(<td>{totalData[k]['gc'] > 0 ? (totalData[k]['cv']*100/totalData[k]['gc']).toFixed(2) : 0}%</td>)
+                tdata.push(<td>{totalData[k]['cv'] > 0 ? (totalData[k]['k']*100/totalData[k]['cv']).toFixed(2) : 0}%</td>)
             }
             
             tbody.push(
@@ -87,46 +87,47 @@ class ChildNode extends Component {
                         }
                     </td>
                     {tdata}
-                    <td>
+                    {((Number(level) != 2 && filterFlag == 'group') || (Number(level) != 3 && filterFlag == 'aff_pub')) ? 
+                    (<td>
                         <div style={{width:'120px'}}>
                             <div className="dropdown pull-left" style={{marginLeft:'15px'}}>
-                              <button className="btn btn-default btn-xs dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                <span className="selected-text">Actions</span> <span className="caret"></span>
+                              <button className="btn btn-default btn-xs dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" disabled={Number(level) > 1 && blockTracks.hasOwnProperty(parent) && $.inArray('all', blockTracks[parent]) != -1 ? true : false}>
+                                <span className="selected-text">
+                                    {
+                                        Number(level) == 1 ? (blockTracks.hasOwnProperty(i) && $.inArray('all', blockTracks[i]) != -1 ? ($.inArray('all', automate[i]) != -1 ? 'Forever Off' : 'Off') : 'On') : 
+                                        (blockTracks.hasOwnProperty(parent) ? (($.inArray('all', blockTracks[parent]) != -1 || $.inArray(i, blockTracks[parent]) != -1) ? (($.inArray('all', automate[parent]) != -1 || $.inArray(i, automate[parent]) != -1) ? 'Forever Off' : 'Off' ) : 'On') : 'On')
+                                    }
+                                </span> 
+                                <span className="caret"></span>
                               </button>
-                              <ul className="dropdown-menu" aria-labelledby="dropdownMenu">
+                              <ul className="dropdown-menu" aria-labelledby="dropdownMenu" data-aff={Number(level) == 1 ? i : parent} data-pub={Number(level) == 1 ? 'all' : i}>
                                 <li>
-                                    <a href="javascript:;" onClick={this.props.onChange}>On<i className="mark-info glyphicon glyphicon-pencil" data-toggle="modal" data-info="on" onClick={this.props.onChange}></i></a>
+                                    <a href="javascript:;" onClick={this.props.onChange.bind(this, 1)}>On</a>
                                 </li>
                                 <li>
-                                    <a href="javascript:;" onClick={this.props.onChange}>Off<i className="mark-info glyphicon glyphicon-pencil" data-toggle="modal" data-info="off" onClick={this.props.onChange}></i></a>
+                                    <a href="javascript:;" onClick={this.props.onChange.bind(this, 0)}>Off</a>
                                 </li>
                                 <li>
-                                    <a href="javascript:;" onClick={this.props.onChange}>Whole Off<i className="mark-info glyphicon glyphicon-pencil" data-toggle="modal" data-info="whole off" onClick={this.props.onChange}></i></a>
+                                    <a href="javascript:;" onClick={this.props.onChange.bind(this, -1)}>Forever Off</a>
                                 </li>
-                                <li>
-                                    <a href="javascript:;" onClick={this.props.onChange}>Network Off<i className="mark-info glyphicon glyphicon-pencil" data-toggle="modal" data-info="network off" onClick={this.props.onChange}></i></a>
-                                </li>
-                                <li role="separator" className="divider"></li>
-                                <li><a href="javascript:;" onClick={this.props.onChange}>More</a></li>
                               </ul>
                             </div>
-                            <div className="pull-left">
-                                <i className="switch-info fa fa-info-circle" data-toggle="tooltip" data-placement="top" title="the reason of selected"></i>
-                            </div>
                         </div>
-                    </td>
+                    </td>) : 
+                    ''
+                    }
                 </tr>
             )
             
             switch(Number(level)) {
                 case 1:
                     if (expand.hasOwnProperty(i) && curData.data) {
-                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} filterLevel={filterLevel} expand={expand} filterFlag={filterFlag} affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
+                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} blockTracks={blockTracks} automate={automate} parent={Number(level) == 1 ? i : parent} filterLevel={filterLevel} expand={expand} filterFlag={filterFlag} affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
                     }
                     break;
                 case 2:
                     if (expand.hasOwnProperty(affId) && $.inArray(i, expand[affId]) != -1 && curData.data) {
-                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} filterLevel={filterLevel} expand={expand} filterFlag={filterFlag} affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
+                        tbody.push(<tr className="well"><td colSpan={colLength}>{<ChildNode level={Number(level) + 1} mapData={curData} blockTracks={blockTracks} automate={automate} parent={Number(level) == 1 ? i : parent} filterLevel={filterLevel} expand={expand} filterFlag={filterFlag} affId={i} tableName={Number(level) + 1 == 2 ? 'second-table' : 'third-table'} onClick={this.props.onClick} onChange={this.props.onChange} />}</td></tr>)
                     }
                     break;
                 }
@@ -149,12 +150,10 @@ export default class Datatable extends Component {
     constructor(props) {
         super(props)
         this.state = Object.assign({entries: []}, this.getDefaultState())
-        this.loadData()
+        this.loadData(this.state.filter)
 
         this.switchDisplay = this.switchDisplay.bind(this)
         this.handleChange = this.handleChange.bind(this)
-        this.setDefaultState = this.setDefaultState.bind(this)
-        this.handleFormSubmit = this.handleFormSubmit.bind(this)
     }
 
     getDefaultState() {
@@ -162,41 +161,55 @@ export default class Datatable extends Component {
             expand: {},
             entries: [],
             loading: true,
-            filterFlag: 'aff_pub',
-            filterLevel: 3
+            blockTracks: JSON.parse(this.props.blockTracks),
+            automate: JSON.parse(this.props.automate),
+            filter: {
+                offer_id: this.props.campaignId,
+                flag: this.props.flag,
+                level: 3
+            }
         }
     }
 
     loadData(args) {
-        let getData = args ? args : [
-            {},
-            {name: 'flag', value: 'aff_pub'},
-            {name: 'level', value: 3}
-        ]
-        $.getJSON('/campaigns/blacklist', getData, function(res){
+        $.getJSON('/campaigns/blacklist', args, function(res){
             let data  = JSON.parse(res);
             if (data.status == 200) {
-                this.setState(Object.assign({},this.state,{ entries: data.result, loading: false, filterFlag:getData[1].value, filterLevel:getData[2].value}))
+                this.setState(Object.assign({},this.state,{ entries: data.result, loading: false, filter: args}))
             }
         }.bind(this))
     }
 
-    handleChange(e) {
-        if ($(e.target).hasClass('mark-info')) {
-            $(e.target).closest('ul').prev().find('.selected-text').html($(e.target).closest('a').text());
-            let info = $(e.target).data('info');
-            $('.mark-info-sm').modal();
-            $('.mark-info-sm').on('show.bs.modal', function(event){
-                var modal = $(this);
-                modal.find('.modal-body #option-name').val(info);
-            });
-        } else {
-            $(e.target).closest('ul').prev().find('.selected-text').html(e.target.text);
-        }
-    }
+    handleChange(data, e) {
+        // if ($(e.target).hasClass('mark-info')) {
+        //     $(e.target).closest('ul').prev().find('.selected-text').html($(e.target).closest('a').text());
+        //     let info = $(e.target).data('info');
+        //     $('.mark-info-sm').modal();
+        //     $('.mark-info-sm').on('show.bs.modal', function(event){
+        //         var modal = $(this);
+        //         modal.find('.modal-body #option-name').val(info);
+        //     });
+        // } else {
+        //     $(e.target).closest('ul').prev().find('.selected-text').html(e.target.text);
+        // }
 
-    handleFormSubmit() {
-        this.loadData($('.filter-form').serializeArray());
+        $(e.target).closest('ul').prev().find('.selected-text').html(e.target.text);
+        let blockTracks = this.state.blockTracks,
+            affId = $(e.target).closest('ul').data('aff'),
+            affPub = $(e.target).closest('ul').data('pub'),
+            postData = {
+                ad_id: this.props.campaignId,
+                aff_id: affId,
+                aff_pub: affPub,
+                track: data != 1 ? 1 : 0,
+                automate: data == -1 ? 0 : 1
+            };
+        
+        $.post('/campaigns/'+this.props.campaignId+'/drag-into', postData, function(res) {
+            if (res.code == 200) {
+                this.setState(Object.assign({},this.state,{ blockTracks: res.blockTracks, automate:res.automate}))
+            }
+        }.bind(this))
     }
 
     switchDisplay(data) {
@@ -219,10 +232,6 @@ export default class Datatable extends Component {
         };
 
         this.setState(Object.assign({},this.state,{ expand: expand}))
-    }
-
-    setDefaultState() {
-        this.setState(this.getDefaultState());
     }
 
     componentDidUpdate() {
@@ -289,6 +298,7 @@ export default class Datatable extends Component {
                     })                    
                 }
             })
+
         }.bind(this))
 
         $('[data-toggle="tooltip"]').tooltip()
@@ -296,36 +306,34 @@ export default class Datatable extends Component {
     }
 
     componentDidMount() {
-        // 
+        $(function(){
+            $('#filter-flag').select2({
+              minimumResultsForSearch: Infinity
+            })
+            $('#filter-flag').on('change', function(e){
+                console.log(e.target.value)
+                window.location.href="/campaigns/"+this.props.campaignId+'?f='+e.target.value
+            }.bind(this))
+        }.bind(this))
     }
 
     render() {
         return (
             <div>
                 <div className="raw">
-                    <div className="col-md-12" style={{marginBottom: '15px'}}>
-                        <form className="form-inline filter-form">
-                          <input type="hidden" name="offer_id" value={this.props.campaignId} />
-                          <div className="form-group" style={{marginRight: '20px'}}>
-                            <select defaultValue="aff_pub" className="form-control" name="flag" id="filter-flag" >
-                                <option value="aff_pub">Aff-Publisher</option>
-                                <option value="group">Group</option>
-                            </select>
-                          </div>
-                          <div className="form-group" style={{marginRight: '20px'}}>
-                            <select className="form-control" id="filter-level" defaultValue="2" name="level">
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                            </select>
-                          </div>
-                          <button type="button" className="btn btn-primary pull-right" style={{marginBottom: '0px', marginRight: '0px'}} onClick={this.handleFormSubmit}>Submit</button>
-                        </form>                        
+                    <div className="col-md-2" style={{marginBottom: '15px'}}>
+                      <div className="form-group">
+                        <select defaultValue={this.props.flag} id="filter-flag" className="form-control">
+                            <option value="aff_pub">Aff-Publisher</option>
+                            <option value="group">Group</option>
+                        </select>
+                      </div>
                     </div>
                 </div>
                 <div className="raw">
                     <div className="col-md-12">
                         <div>
-                        {!this.state.loading ? <ChildNode mapData={this.state.entries} {...this.state} level="1" affId=""  tableName="first-table" onClick={this.switchDisplay} onChange={this.handleChange} /> :
+                        {!this.state.loading ? <ChildNode mapData={this.state.entries} blockTracks={this.state.blockTracks} automate={this.state.automate} expand={this.state.expand} filterFlag={this.state.filter.flag} parent='' filterLevel={this.state.filter.level} level="1" affId=""  tableName="first-table" onClick={this.switchDisplay} onChange={this.handleChange} /> :
                                 <div className="text-center"><img src="/images/loading.gif" /></div>}
                         </div>
                     </div>
@@ -335,9 +343,9 @@ export default class Datatable extends Component {
     }
 }
 
-window.showTableHtml = function(campaignId) {
+window.showTableHtml = function(campaignId, flag, blockTracks, automate) {
     render(
-       <Datatable campaignId={campaignId} />,
+       <Datatable campaignId={campaignId} flag={flag} blockTracks={blockTracks} automate={automate}/>,
        document.getElementById('datatable-select') 
     )   
 }

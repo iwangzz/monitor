@@ -63,6 +63,25 @@ class CampaignsController extends Controller
      */
     public function show(Request $request, $id, $opt = 'kpi')
     {
+        $blockTracks = $automate = [];
+        foreach (\App\Models\AffiliateBlackList::select('aff_id', 'aff_pub', 'automate')->where(['ad_id' => $id, 'track' => 1])->get() as $list) {
+            if (!isset($blockTracks[$list->aff_id])) {
+                $blockTracks[$list->aff_id] = [];
+                $blockTracks[$list->aff_id][] = $list->aff_pub;
+            } else {
+                $blockTracks[$list->aff_id][] = $list->aff_pub;
+            }
+
+            if ($list->automate == 0) {
+                if (!isset($automate[$list->aff_id])) {
+                    $automate[$list->aff_id] = [];
+                    $automate[$list->aff_id][] = $list->aff_pub;
+                } else {
+                    $automate[$list->aff_id][] = $list->aff_pub;
+                }
+            }
+        }
+
         $campaign = Campaign::findOrFail($id);
         if($campaign) {
             return view('campaigns.campaign-detail')
@@ -71,6 +90,9 @@ class CampaignsController extends Controller
                     'opt' => $opt,
                     'timezones' => \App\Setting::$timezones,
                     'promoType' => Campaign::$promoType,
+                    'flag' => $request->has('f') ? $request->input('f') : 'aff_pub',
+                    'blockTracks' => $blockTracks,
+                    'automate' => $automate
                 ]);
         }
     }
@@ -153,5 +175,57 @@ class CampaignsController extends Controller
         $data = \ApiData::getBlacklist(config('moca.api.blacklist'), $conditions);
 
         return response()->json(json_encode($data));
+    }
+
+    /**
+     * block  tracks
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function dragInto(Request $request) {
+        $blockTracks = $automate = [];
+        \App\Models\AffiliateBlackList::updateOrCreate([
+            'ad_id' => $request->input('ad_id'),
+            'aff_id' => $request->input('aff_id'),
+            'aff_pub' => $request->input('aff_pub')
+        ], [
+            'track' => $request->input('track'),
+            'automate' => $request->input('automate')
+        ]);
+
+        if ($request->input('track') == 1 && $request->input('aff_pub') == 'all') {
+            \App\Models\AffiliateBlackList::where([
+                'ad_id' => $request->input('ad_id'),
+                'aff_id' => $request->input('aff_id'),
+            ])->update([
+                'track' => 1,
+                'automate' => $request->input('automate')
+            ]); 
+        }
+
+        foreach (\App\Models\AffiliateBlackList::select('aff_id', 'aff_pub', 'automate')->where(['ad_id' => $request->input('ad_id'), 'track' => 1])->get() as $list) {
+            if (!isset($blockTracks[$list->aff_id])) {
+                $blockTracks[$list->aff_id] = [];
+                $blockTracks[$list->aff_id][] = $list->aff_pub;
+            } else {
+                $blockTracks[$list->aff_id][] = $list->aff_pub;
+            }
+
+            if ($list->automate == 0) {
+                if (!isset($automate[$list->aff_id])) {
+                    $automate[$list->aff_id] = [];
+                    $automate[$list->aff_id][] = $list->aff_pub;
+                } else {
+                    $automate[$list->aff_id][] = $list->aff_pub;
+                }
+            }
+        }
+
+        return response()->json([
+            'code' => 200,
+            'msg' => 'success',
+            'blockTracks' => $blockTracks,
+            'automate' => $automate
+        ]);
     }
 }

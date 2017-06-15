@@ -1,27 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-<?php
-  $now = time();
-?>
-
-<div class="raw page-title">
+<!-- <div class="raw page-title">
   <div class="col-md-12 title_left">
     <h3>Campaign Detail</h3>
   </div>
-</div>
+</div> -->
 
-<div class="clearfix"></div>
+<!-- <div class="clearfix"></div> -->
 
 <div class="row">
-  <div class="col-md-12">
-    <div class="x_panel">
-      <div class="x_title">
+  <div class="">
+    <div class="">
+      <!-- <div class="x_title">
         <h2>{{ $campaign->project_name }}</h2>
         <div class="clearfix"></div>
-      </div>
+      </div> -->
       <div class="x_content">
-        <div class="col-md-9 col-sm-9 col-xs-12 text-center">
+        <div class="col-md-9 col-sm-9 col-xs-12 text-center hide">
 
           <ul class="stats-overview">
             <li>
@@ -41,7 +37,7 @@
           <br />
         </div>
         <!-- start project-detail sidebar -->
-        <div class="col-md-3 col-sm-3 col-xs-12">
+        <div class="col-md-3 col-sm-3 col-xs-12 hide">
 
           <section class="panel">
 
@@ -73,7 +69,7 @@
         </div>
         <div class="col-sm-12">
           <div class="" role="tabpanel" data-example-id="togglable-tabs">
-            <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
+            <ul id="myTab" class="nav nav-tabs bar_tabs hide" role="tablist">
               <li role="presentation" @if($opt == 'kpi') class="active" @endif>
                   <a href="/campaigns/{{ $campaign->id }}/kpi">Overview</a>
               </li>
@@ -94,15 +90,7 @@
 <script src="{{ elixir('js/components/datatable-select.js') }}"></script>
 <script>
 $(function() {
-    showTableHtml('{{ $campaign->id }}');
-    $('#filter-flag').select2({
-      minimumResultsForSearch: Infinity
-    })
-    $('#filter-level').select2({
-      minimumResultsForSearch: Infinity
-    })
-    // detailTable.api().ajax.reload()
-
+    showTableHtml('{{ $campaign->id }}', '{{ $flag }}', '{!! json_encode($blockTracks) !!}', '{!! json_encode($automate) !!}');
     var theme = {
           color: [
               '#26B99A', '#34495E', '#BDC3C7', '#3498DB',

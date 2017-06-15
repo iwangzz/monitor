@@ -21,4 +21,5 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/campaigns/blacklist', 'CampaignsController@getBlacklist');
     Route::resource('/campaigns', 'CampaignsController');
     Route::get('/campaigns/{campaign}/{opt}', 'CampaignsController@show');
+    Route::post('/campaigns/{campaign}/drag-into', 'CampaignsController@dragInto');
 });

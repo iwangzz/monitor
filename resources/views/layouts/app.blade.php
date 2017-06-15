@@ -4,14 +4,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     <title>Moca Operate Monitor</title>
     <link href="{{ elixir('css/main.css') }}" rel="stylesheet">
 </head>
-<body class="nav-no">
+<body class="nav-no" style="background:#fff;">
     <div class="container body">
       <div class="main_container">
-        <div class="top_nav">
+        <!-- <div class="top_nav">
           <div class="nav_menu">
             <nav class="" role="navigation">
               <ul class="nav navbar-nav navbar-left" role="tablist" style="margin-left:22px;">
@@ -31,12 +32,13 @@
               </ul>
             </nav>
           </div>
-        </div>
+        </div> -->
         
-        <div class="right_col col-md-12" role="main">
+        <!-- <div class="right_col col-md-12" role="main"> -->
+        <div class="" role="main">
           @yield('content')
         </div>
-      </div>
+      <!-- </div>
     </div>
 
     <div class="modal fade mark-info-sm in" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
@@ -68,8 +70,8 @@
               </div>
             </form>
           </div>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
+        </div> -->
+      </div>
     </div>
 
     <script src="{{ elixir('js/main.js') }}"></script>

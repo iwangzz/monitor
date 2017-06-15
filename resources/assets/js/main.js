@@ -16,3 +16,9 @@ require('datatables.net-buttons/js/buttons.print')(window, $);
 
 require('select2');
 
+
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});

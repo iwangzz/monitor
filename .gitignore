@@ -1,9 +1,5 @@
-node_modules
-vendor
+/node_modules
+/vendor
 README.md
-public/css
-public/js
-public/build
-resources/assets/css/*
 .env
 .env.example

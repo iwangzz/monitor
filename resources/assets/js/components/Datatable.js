@@ -51,17 +51,18 @@ class ChildNode extends Component {
                 </tr>
             </thead>
         )
-        tfoot.push(
-            <tfoot>
-                <tr>
-                    <td className="text-center">Total</td>
-                    {tfdata}
-                    {((Number(level) != 2 && filterFlag == 'group') || (Number(level) != 3 && filterFlag == 'aff_pub')) ? <td></td> : '' }
-                </tr>
-            </tfoot>
-        )
         
-        if (mapData.data && Object.keys(mapData).length > 0) {
+        if (mapData.data && Object.keys(mapData.data).length > 0) {
+            tfoot.push(
+                <tfoot>
+                    <tr>
+                        <td className="text-center">Total</td>
+                        {tfdata}
+                        {((Number(level) != 2 && filterFlag == 'group') || (Number(level) != 3 && filterFlag == 'aff_pub')) ? <td></td> : '' }
+                    </tr>
+                </tfoot>
+            )
+        
             for (var i in mapData.data) {
             let curData = mapData.data[i], tdata = [];
             let totalData = curData.hasOwnProperty('total') ? curData.total : curData;

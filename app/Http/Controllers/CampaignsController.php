@@ -149,22 +149,22 @@ class CampaignsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function getBlacklist(Request $request) {
-        // $campaign = Campaign::findOrFail($request->input('offer_id'));
-        // $campaignPhase = $campaign->phases()->where('phase_id', $campaign->phase_id)->first();
-        // if ($campaignPhase->end_time > 0 && $campaignPhase->end_time < $request->server('REQUEST_TIME')) {
-        //     $endDate = date('Y-m-d', $campaignPhase->end_time);
-        // } else {
-        //     $endDate = date('Y-m-d', $request->server('REQUEST_TIME'));
-        // }
+        $campaign = Campaign::findOrFail($request->input('offer_id'));
+        $campaignPhase = $campaign->phases()->where('phase_id', $campaign->phase_id)->first();
+        if ($campaignPhase->end_time > 0 && $campaignPhase->end_time < $request->server('REQUEST_TIME')) {
+            $endDate = date('Y-m-d', $campaignPhase->end_time);
+        } else {
+            $endDate = date('Y-m-d', $request->server('REQUEST_TIME'));
+        }
 
         $conditions = array_merge([
             'flag' => 'aff_pub',
             'level' => 2,
             'event' => 2,
             'days' => '1,2,7,30',
-            // 'end_date' => $endDate
+            'end_date' => $endDate
         ], [
-            'offer_id' => 102580,
+            'offer_id' => $request->input('offer_id'),
             'flag' => $request->input('flag'),
             'level' => $request->input('level'),
             'event' => 2,
